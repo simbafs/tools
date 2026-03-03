@@ -1,0 +1,398 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Timer">
+	<div class="relative flex min-h-screen flex-col items-center justify-center bg-white font-mono text-zinc-900 transition-colors duration-300 dark:bg-zinc-950 dark:text-zinc-50">
+		<!-- Timer Display -->
+		<div class="flex flex-col items-center gap-4">
+			<div id="time-display" class="text-[15vw] font-bold leading-none tracking-tighter tabular-nums select-none">0</div>
+			<div id="unit-label" class="text-xl uppercase tracking-[0.2em] opacity-50 select-none">seconds</div>
+		</div>
+
+		<!-- Controls -->
+		<div id="controls-panel" class="fixed bottom-8 left-1/2 flex -translate-x-1/2 flex-col gap-4 rounded-3xl bg-zinc-100/80 p-6 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:bg-zinc-100 hover:opacity-100 dark:bg-zinc-900/80 dark:hover:bg-zinc-900 opacity-0 hover:opacity-100 group w-[90vw] max-w-md border border-white/20">
+			
+			<!-- Top Row: Mode & Unit -->
+			<div class="flex items-center justify-between gap-2">
+				<button id="mode-toggle" class="flex-1 rounded-xl bg-white px-3 py-2 text-sm font-medium shadow-sm transition hover:bg-zinc-50 dark:bg-zinc-800 dark:hover:bg-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/50">
+					Countdown
+				</button>
+				<select id="unit-select" class="flex-1 rounded-xl bg-white px-3 py-2 text-sm font-medium shadow-sm outline-none transition hover:bg-zinc-50 focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800 dark:hover:bg-zinc-700">
+					<optgroup label="Short Duration">
+						<option value="seconds">Seconds</option>
+						<option value="minutes">Minutes</option>
+						<option value="hours">Hours</option>
+						<option value="ms">MM:SS</option>
+						<option value="hms">HH:MM:SS</option>
+					</optgroup>
+					<optgroup label="Long Duration">
+						<option value="days">Days</option>
+						<option value="weeks">Weeks</option>
+						<option value="months">Months</option>
+						<option value="years">Years</option>
+						<option value="dhms">d HH:MM:SS</option>
+						<option value="full">Full (Y M D...)</option>
+					</optgroup>
+				</select>
+			</div>
+
+			<hr class="border-zinc-200 dark:border-zinc-800" />
+
+			<!-- Input Method Tabs -->
+			<div class="flex gap-2 rounded-xl bg-zinc-200/50 p-1 dark:bg-zinc-800/50">
+				<button data-tab="date" class="tab-btn flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:bg-white/50 dark:hover:bg-zinc-700/50 data-[active=true]:bg-white data-[active=true]:shadow-sm dark:data-[active=true]:bg-zinc-700">
+					Target Date
+				</button>
+				<button data-tab="duration" class="tab-btn flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:bg-white/50 dark:hover:bg-zinc-700/50 data-[active=true]:bg-white data-[active=true]:shadow-sm dark:data-[active=true]:bg-zinc-700">
+					Duration
+				</button>
+			</div>
+
+			<!-- Date Input -->
+			<div id="tab-content-date" class="tab-content">
+				<input type="datetime-local" id="date-picker" class="w-full rounded-xl bg-white px-4 py-3 font-mono text-sm shadow-sm outline-none transition hover:bg-zinc-50 focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800 dark:hover:bg-zinc-700 accent-blue-500" />
+			</div>
+
+			<!-- Duration Input -->
+			<div id="tab-content-duration" class="tab-content hidden flex-col gap-3">
+				<div class="grid grid-cols-4 gap-2">
+					<div class="flex flex-col gap-1">
+						<input type="number" id="dur-d" placeholder="0" min="0" class="w-full rounded-lg bg-white px-2 py-2 text-center font-mono shadow-sm outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800" />
+						<label class="text-center text-[10px] uppercase text-zinc-500">Days</label>
+					</div>
+					<div class="flex flex-col gap-1">
+						<input type="number" id="dur-h" placeholder="0" min="0" class="w-full rounded-lg bg-white px-2 py-2 text-center font-mono shadow-sm outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800" />
+						<label class="text-center text-[10px] uppercase text-zinc-500">Hours</label>
+					</div>
+					<div class="flex flex-col gap-1">
+						<input type="number" id="dur-m" placeholder="0" min="0" class="w-full rounded-lg bg-white px-2 py-2 text-center font-mono shadow-sm outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800" />
+						<label class="text-center text-[10px] uppercase text-zinc-500">Mins</label>
+					</div>
+					<div class="flex flex-col gap-1">
+						<input type="number" id="dur-s" placeholder="0" min="0" class="w-full rounded-lg bg-white px-2 py-2 text-center font-mono shadow-sm outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800" />
+						<label class="text-center text-[10px] uppercase text-zinc-500">Secs</label>
+					</div>
+				</div>
+				<button id="set-duration-btn" class="w-full rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-md transition hover:bg-blue-700 active:scale-95">
+					Start Timer
+				</button>
+			</div>
+			
+			<div class="text-center text-[10px] text-zinc-400 dark:text-zinc-500">Hover to configure</div>
+		</div>
+	</div>
+</Layout>
+
+<script>
+	import { URLStore } from '../lib/url-store';
+
+	type Mode = 'countdown' | 'countup';
+	type Unit = 'seconds' | 'days' | 'weeks' | 'hours' | 'minutes' | 'hms' | 'ms' | 'dhms' | 'years' | 'months' | 'full';
+
+	interface TimerState {
+		mode: Mode;
+		date: string; // ISO string
+		unit: Unit;
+	}
+
+	// Default to next hour
+	const now = new Date();
+	now.setHours(now.getHours() + 1, 0, 0, 0);
+
+	const defaultState: TimerState = {
+		mode: 'countdown',
+		date: now.toISOString(),
+		unit: 'seconds',
+	};
+
+	const store = new URLStore<TimerState>(defaultState);
+
+	// Elements
+	const timeDisplay = document.getElementById('time-display')!;
+	const unitLabel = document.getElementById('unit-label')!;
+	const modeToggle = document.getElementById('mode-toggle')!;
+	const unitSelect = document.getElementById('unit-select') as HTMLSelectElement;
+	const datePicker = document.getElementById('date-picker') as HTMLInputElement;
+	
+	// Tab Elements
+	const tabBtns = document.querySelectorAll('.tab-btn');
+	const tabContentDate = document.getElementById('tab-content-date')!;
+	const tabContentDuration = document.getElementById('tab-content-duration')!;
+	
+	// Duration Elements
+	const durInputs = {
+		d: document.getElementById('dur-d') as HTMLInputElement,
+		h: document.getElementById('dur-h') as HTMLInputElement,
+		m: document.getElementById('dur-m') as HTMLInputElement,
+		s: document.getElementById('dur-s') as HTMLInputElement,
+	};
+	const setDurationBtn = document.getElementById('set-duration-btn')!;
+
+	// State
+	let state = store.get();
+
+	// --- Helper Functions ---
+
+	function toLocalISOString(date: Date): string {
+		const pad = (n: number) => n.toString().padStart(2, '0');
+		return (
+			date.getFullYear() +
+			'-' +
+			pad(date.getMonth() + 1) +
+			'-' +
+			pad(date.getDate()) +
+			'T' +
+			pad(date.getHours()) +
+			':' +
+			pad(date.getMinutes())
+		);
+	}
+
+	// --- Rendering ---
+
+	function renderControls() {
+		modeToggle.textContent = state.mode === 'countdown' ? 'Countdown to' : 'Countup from';
+		unitSelect.value = state.unit;
+		
+		if (document.activeElement !== datePicker) {
+			const date = new Date(state.date);
+			if (!isNaN(date.getTime())) {
+				datePicker.value = toLocalISOString(date);
+			}
+		}
+	}
+
+	function updateDisplay() {
+		const now = new Date();
+		const target = new Date(state.date);
+		let diff = 0;
+
+		if (state.mode === 'countdown') {
+			diff = target.getTime() - now.getTime();
+		} else {
+			diff = now.getTime() - target.getTime();
+		}
+
+		// Calculate value based on unit
+		let value = 0;
+		let formattedValue = '';
+		let labelText = state.unit;
+
+		const absDiff = Math.abs(diff);
+		const sign = diff < 0 ? '-' : '';
+
+		if (state.unit === 'hms' || state.unit === 'ms' || state.unit === 'dhms' || state.unit === 'full') {
+			
+			// For full date breakdown, use calendar math
+			if (state.unit === 'full') {
+				const start = diff > 0 ? now : target;
+				const end = diff > 0 ? target : now;
+				
+				let years = end.getFullYear() - start.getFullYear();
+				let months = end.getMonth() - start.getMonth();
+				let days = end.getDate() - start.getDate();
+				let hours = end.getHours() - start.getHours();
+				let minutes = end.getMinutes() - start.getMinutes();
+				let seconds = end.getSeconds() - start.getSeconds();
+
+				// Adjust for negative values
+				if (seconds < 0) { seconds += 60; minutes--; }
+				if (minutes < 0) { minutes += 60; hours--; }
+				if (hours < 0) { hours += 24; days--; }
+				if (days < 0) {
+					// Days in previous month
+					const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
+					days += prevMonth.getDate();
+					months--;
+				}
+				if (months < 0) { months += 12; years--; }
+
+				const pad = (n: number) => n.toString().padStart(2, '0');
+				
+				// Build string: "1y 2m 3d 04:05:06"
+				// Only show units if they are > 0 to keep it cleaner? Or always show?
+				// "1y 0m 0d..." looks weird. Let's show all for consistency.
+				formattedValue = `${sign}${years}y ${months}m ${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+				labelText = 'time';
+				timeDisplay.style.fontSize = '8vw'; // Smaller font for long string
+			} else {
+				const totalSeconds = Math.floor(absDiff / 1000);
+				const days = Math.floor(totalSeconds / 86400);
+				const hours = Math.floor((totalSeconds % 86400) / 3600);
+				const minutes = Math.floor((totalSeconds % 3600) / 60);
+				const seconds = totalSeconds % 60;
+
+				const pad = (n: number) => n.toString().padStart(2, '0');
+
+				if (state.unit === 'dhms') {
+					formattedValue = `${sign}${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+					labelText = 'time';
+					timeDisplay.style.fontSize = '10vw';
+				} else if (state.unit === 'hms') {
+					// For very long durations, hours can be > 99, so we let it grow naturally
+					const totalHours = Math.floor(totalSeconds / 3600);
+					formattedValue = `${sign}${totalHours}:${pad(minutes)}:${pad(seconds)}`;
+					labelText = 'time';
+					timeDisplay.style.fontSize = '12vw';
+				} else {
+					// ms: Minutes can be large
+					const totalMinutes = Math.floor(totalSeconds / 60);
+					formattedValue = `${sign}${totalMinutes}:${pad(seconds)}`;
+					labelText = 'time';
+					timeDisplay.style.fontSize = '12vw';
+				}
+			}
+		} else {
+			// Restore default large font
+			timeDisplay.style.fontSize = '15vw';
+			
+			switch (state.unit) {
+				case 'seconds':
+					value = diff / 1000;
+					formattedValue = Math.floor(value).toLocaleString();
+					break;
+				case 'minutes':
+					value = diff / (1000 * 60);
+					formattedValue = value.toFixed(2);
+					break;
+				case 'hours':
+					value = diff / (1000 * 60 * 60);
+					formattedValue = value.toFixed(2);
+					break;
+				case 'days':
+					value = diff / (1000 * 60 * 60 * 24);
+					formattedValue = value.toFixed(2);
+					break;
+				case 'weeks':
+					value = diff / (1000 * 60 * 60 * 24 * 7);
+					formattedValue = value.toFixed(2);
+					break;
+				case 'months':
+					// Approx 30.436875 days per month
+					value = diff / (1000 * 60 * 60 * 24 * 30.436875);
+					formattedValue = value.toFixed(2);
+					break;
+				case 'years':
+					// Approx 365.2425 days per year
+					value = diff / (1000 * 60 * 60 * 24 * 365.2425);
+					formattedValue = value.toFixed(2);
+					break;
+			}
+		}
+
+		timeDisplay.textContent = formattedValue;
+
+		// Dynamic label
+		let suffix = '';
+		if (state.mode === 'countdown') {
+			suffix = diff < 0 ? 'overdue' : 'remaining';
+		} else {
+			suffix = diff < 0 ? 'until start' : 'elapsed';
+		}
+		
+		unitLabel.textContent = `${labelText} ${suffix}`;
+	}
+
+
+	function save() {
+		store.set(state);
+		renderControls(); 
+		updateDisplay();
+	}
+
+	// --- Logic ---
+
+	function handleSetDuration() {
+		const d = parseInt(durInputs.d.value) || 0;
+		const h = parseInt(durInputs.h.value) || 0;
+		const m = parseInt(durInputs.m.value) || 0;
+		const s = parseInt(durInputs.s.value) || 0;
+
+		const totalMs = ((d * 24 * 60 * 60) + (h * 60 * 60) + (m * 60) + s) * 1000;
+
+		if (totalMs === 0) return;
+
+		const now = new Date();
+		let targetTime: Date;
+
+		if (state.mode === 'countdown') {
+			targetTime = new Date(now.getTime() + totalMs);
+		} else {
+			// For countup, "10 minutes" usually means "Start counting up from 10 minutes ago"
+			targetTime = new Date(now.getTime() - totalMs);
+		}
+
+		state.date = targetTime.toISOString();
+		save();
+		
+		// Optional: Clear inputs or give feedback
+		// durInputs.d.value = ''; ...
+	}
+
+	// --- Event Listeners ---
+
+	// Tab Switching
+	tabBtns.forEach(btn => {
+		btn.addEventListener('click', () => {
+			const tab = (btn as HTMLElement).dataset.tab;
+			
+			// Update Buttons
+			tabBtns.forEach(b => b.setAttribute('data-active', 'false'));
+			btn.setAttribute('data-active', 'true');
+
+			// Update Content
+			if (tab === 'date') {
+				tabContentDate.classList.remove('hidden');
+				tabContentDuration.classList.add('hidden');
+				tabContentDuration.classList.remove('flex');
+			} else {
+				tabContentDate.classList.add('hidden');
+				tabContentDuration.classList.remove('hidden');
+				tabContentDuration.classList.add('flex');
+			}
+		});
+	});
+
+	// Initialize Tabs (Default to Date)
+	tabBtns[0].setAttribute('data-active', 'true');
+
+
+	modeToggle.addEventListener('click', () => {
+		state.mode = state.mode === 'countdown' ? 'countup' : 'countdown';
+		save();
+	});
+
+	unitSelect.addEventListener('change', () => {
+		state.unit = unitSelect.value as Unit;
+		save();
+	});
+
+	datePicker.addEventListener('change', () => {
+		if (datePicker.value) {
+			const d = new Date(datePicker.value);
+			state.date = d.toISOString();
+			save();
+		}
+	});
+
+	setDurationBtn.addEventListener('click', handleSetDuration);
+
+	// External updates
+	store.subscribe((newState) => {
+		state = newState;
+		renderControls();
+		updateDisplay();
+	});
+
+	// --- Init ---
+	renderControls();
+	
+	// Animation Loop
+	function loop() {
+		updateDisplay();
+		requestAnimationFrame(loop);
+	}
+	loop();
+
+</script>
