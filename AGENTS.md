@@ -24,136 +24,91 @@ Use `pnpm` for all script executions.
 
 ### Linting & Testing
 
-Currently, there are no explicit linting or testing scripts in `package.json`. However, you should:
+-   **Type Checking:** Use `pnpm astro check` (or `npx astro check`) to verify TypeScript types.
+-   **Linting:** Follow standard Astro/TypeScript linting practices.
+-   **Testing:** Currently manual verification.
 
--   **Type Checking:** Use `pnpm astro check` (or `npx astro check` if the script isn't mapped) to verify TypeScript types.
--   **Linting:** Follow standard Astro/TypeScript linting practices. If adding linting, prefer ESLint with `eslint-plugin-astro`.
--   **Testing:** If adding tests, prefer Vitest as it integrates well with Vite/Astro. Place tests alongside components (e.g., `Component.test.ts`) or in a `tests/` directory.
+## 3. Architecture & Core Constraints
 
-### Running a Single Test
+**CRITICAL:** This project is a collection of client-side tools with **NO backend, NO cookies, and NO local storage**.
 
-Since no test runner is configured, you cannot run a single test yet.
-*If you add Vitest:*
-`pnpm vitest run path/to/test/file.test.ts`
+### URL-Based State
+All application state must be persisted in the URL query parameters. This allows users to save/share their state by simply bookmarking or sharing the link.
 
-## 3. Project Structure
+-   **Library:** Use `src/lib/url-store.ts` for all state management.
+-   **Usage:**
+    ```typescript
+    import { URLStore } from '../lib/url-store';
+    
+    // Initialize with default value
+    const store = new URLStore<string>('default');
+    
+    // Read
+    const val = store.get();
+    
+    // Write (automatically updates URL)
+    store.set('newValue');
+    
+    // Subscribe (updates on back/forward navigation)
+    store.subscribe((val) => { console.log(val); });
+    ```
 
--   `src/pages/`: File-based routing. Files here become routes (e.g., `index.astro` -> `/`).
--   `src/components/`: Reusable UI components (e.g., `Welcome.astro`).
--   `src/layouts/`: Wrapper layouts for pages (e.g., `Layout.astro`).
--   `src/assets/`: Static assets like images and fonts.
--   `public/`: Static files served at the root.
+## 4. Project Structure
 
-## 4. Code Style & Conventions
+-   `src/pages/`: Contains the tools. Each file (e.g., `clock.astro`) is a standalone tool.
+-   `src/lib/`: Shared utilities (e.g., `url-store.ts`).
+-   `src/layouts/`: Wrapper layouts (e.g., `Layout.astro`).
+-   `src/components/`: Reusable UI components.
+
+## 5. Code Style & Conventions
 
 ### Formatting
+-   **Indentation:** **Tabs**.
+-   **Quotes:** Single quotes for JS/TS, double for HTML.
+-   **Semicolons:** Always.
 
--   **Indentation:** **Tabs** (based on existing files). Do not use spaces for indentation.
--   **Quotes:** Single quotes preferred for JS/TS imports and strings, double quotes for HTML attributes.
--   **Semicolons:** Always use semicolons.
--   **Trailing Commas:** ES5 trailing commas (objects, arrays, etc.).
-
-### Naming Conventions
-
--   **Components:** PascalCase (e.g., `Welcome.astro`, `Card.tsx`).
--   **Files:**
-    -   Components: PascalCase (`Welcome.astro`).
-    -   Pages: kebab-case (`index.astro`, `about-us.astro`).
-    -   Utilities/Scripts: camelCase or kebab-case (`utils.ts`, `api-client.ts`).
-    -   Assets: kebab-case (`astro.svg`).
--   **Variables/Functions:** camelCase.
--   **Types/Interfaces:** PascalCase.
+### Tool Design Guidelines
+-   **Focus:** Each tool should do **one thing** well.
+-   **Visuals:** Tools should be **distraction-free**. Use the full viewport (`100vh`/`100vw`) where appropriate. Avoid clutter.
+-   **Dark Mode:** All tools **must** support dark mode (via `@media (prefers-color-scheme: dark)`).
+-   **Responsiveness:** Must work on mobile and desktop.
 
 ### TypeScript
+-   **Strict Mode:** Enabled.
+-   **No `any`:** Use strict typing.
 
--   **Strict Mode:** Enabled (via `tsconfig.json` extending `astro/tsconfigs/strict`).
--   **Types:** Explicitly define props interfaces for components.
-    ```astro
-    ---
-    interface Props {
-      title: string;
-      body: string;
-    }
-    const { title, body } = Astro.props;
-    ---
-    ```
--   **Avoid `any`:** Use strict typing. Use `unknown` if the type is truly not known yet.
+## 6. Adding New Features/Tools
 
-### Astro Specifics
+1.  **Plan:** Identify the single purpose of the tool.
+2.  **Create:** Add a new `.astro` file in `src/pages/`.
+3.  **State:** Implement `URLStore` for any data that needs to persist.
+4.  **Register:** Add the tool to the list in `src/pages/index.astro`.
+5.  **Verify:** Check functionality, URL persistence, and dark mode.
 
--   **Frontmatter:** Use the `---` fence for component logic (imports, props, data fetching).
--   **Styles:** Use scoped `<style>` blocks within `.astro` files.
-    -   Avoid global styles unless necessary (e.g., in `Layout.astro` or global CSS files).
-    -   Use standard CSS (Astro supports it out of the box).
--   **Client Directives:** Use `client:*` directives sparingly, only when interactivity is needed (e.g., `client:load`, `client:visible`).
-
-## 5. Error Handling
-
--   **Try/Catch:** Wrap async operations (data fetching) in `try/catch` blocks.
--   **UI Feedback:** Display user-friendly error messages if data loading fails.
--   **Logging:** Log errors to the console in development, but avoid exposing sensitive info in production.
-
-## 6. Git & Version Control
-
--   **Commit Messages:** Use conventional commits (e.g., `feat: add new component`, `fix: resolve layout bug`).
--   **Atomic Commits:** Keep commits small and focused on a single task.
-
-## 7. Adding New Features
-
-1.  **Plan:** Understand the requirement.
-2.  **Structure:** Decide where the new component or page belongs.
-3.  **Implement:** Write the code following the style guide.
-4.  **Verify:** Run `pnpm dev` to check functionality.
-5.  **Type Check:** Run `pnpm astro check` to ensure no type errors.
-
-## 8. Example Component Structure
+## 7. Example Component Structure
 
 ```astro
 ---
-// Imports
-import SomeComponent from './SomeComponent.astro';
-
-// Props Interface
-interface Props {
-	title: string;
-	isActive?: boolean;
-}
-
-// Props Destructuring
-const { title, isActive = false } = Astro.props;
-
-// Logic/Data Fetching
-const formattedTitle = title.toUpperCase();
+import Layout from '../layouts/Layout.astro';
 ---
+<Layout title="Tool Name">
+    <div class="container">
+        <!-- Tool UI -->
+    </div>
+</Layout>
 
-<!-- Template -->
-<div class:list={['container', { active: isActive }]}>
-	<h1>{formattedTitle}</h1>
-	<SomeComponent />
-	<slot />
-</div>
+<script>
+    import { URLStore } from '../lib/url-store';
+    // Logic here
+</script>
 
-<!-- Scoped Styles -->
 <style>
-	.container {
-		padding: 1rem;
-		border: 1px solid #ccc;
-	}
-	.active {
-		border-color: blue;
-	}
+    /* Scoped CSS */
 </style>
 ```
 
-## 9. Rules from Other Sources
+## 8. Final Notes
 
-*No `.cursor/rules`, `.cursorrules`, or `.github/copilot-instructions.md` found.*
-
-## 10. Final Notes
-
--   **Performance:** Optimize images (use Astro's `<Image />` if possible).
--   **Accessibility:** Use semantic HTML elements (`<main>`, `<nav>`, `<article>`) and proper ARIA attributes.
--   **Refactoring:** When refactoring, ensure you don't break existing functionality. Check strictly typed props.
-
----
-*Generated by OpenCode Agent*
+-   **Performance:** Keep bundles small.
+-   **Accessibility:** Use semantic HTML.
+-   **Refactoring:** Ensure you don't break existing URL state compatibility if possible.
