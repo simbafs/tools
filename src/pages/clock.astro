@@ -1,0 +1,82 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Clock">
+	<div class="container">
+		<time id="clock">00:00:00</time>
+	</div>
+</Layout>
+
+<script>
+	import { URLStore } from '../lib/url-store';
+
+	const store = new URLStore<boolean>(false); // default to 12h (false)
+	let is24Hour = store.get();
+
+	const clockEl = document.getElementById('clock');
+
+	function updateTime() {
+		if (!clockEl) return;
+		const now = new Date();
+		// Format string logic
+		const options: Intl.DateTimeFormatOptions = {
+			hour: 'numeric',
+			minute: '2-digit',
+			second: '2-digit',
+			hour12: !is24Hour,
+		};
+		clockEl.textContent = now.toLocaleTimeString([], options);
+	}
+
+	function handleFormatToggle() {
+		is24Hour = !is24Hour;
+		store.set(is24Hour);
+		updateTime();
+	}
+
+	if (clockEl) {
+		updateTime();
+		setInterval(updateTime, 1000);
+
+		// Click to toggle
+		clockEl.addEventListener('click', handleFormatToggle);
+		clockEl.style.cursor = 'pointer';
+		clockEl.title = 'Click to toggle 12/24h format';
+	}
+
+	// Listen for external updates (e.g. back button)
+	store.subscribe((val) => {
+		is24Hour = val;
+		updateTime();
+	});
+</script>
+
+<style>
+	.container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 100vh;
+		width: 100vw;
+		overflow: hidden;
+		background-color: #fff;
+		color: #333;
+		font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Droid Sans Mono', 'Source Code Pro', monospace;
+		user-select: none;
+	}
+
+	time {
+		font-size: 15vw;
+		font-variant-numeric: tabular-nums;
+		line-height: 1;
+		font-weight: bold;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.container {
+			background-color: #111;
+			color: #eee;
+		}
+	}
+</style>
