@@ -991,6 +991,13 @@ import Layout from '../layouts/Layout.astro';
 		els.displayMeta.textContent = formatMeta(target, false);
 	}
 
+	function shouldAutoOpenConfig() {
+		if (!config.started || !config.targetIso) return true;
+
+		const target = new Date(config.targetIso);
+		return Number.isNaN(target.getTime());
+	}
+
 	store.subscribe((newConfig) => {
 		if (!isUpdatingFromForm) {
 			config = newConfig;
@@ -1083,6 +1090,10 @@ import Layout from '../layouts/Layout.astro';
 
 	syncForm();
 	render();
+
+	if (shouldAutoOpenConfig()) {
+		els.configDialog.showModal();
+	}
 
 	function loop() {
 		render();
