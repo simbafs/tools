@@ -2,397 +2,699 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="Timer">
-	<div class="relative flex min-h-screen flex-col items-center justify-center bg-white font-mono text-zinc-900 transition-colors duration-300 dark:bg-zinc-950 dark:text-zinc-50">
-		<!-- Timer Display -->
-		<div class="flex flex-col items-center gap-4">
-			<div id="time-display" class="text-[15vw] font-bold leading-none tracking-tighter tabular-nums select-none">0</div>
-			<div id="unit-label" class="text-xl uppercase tracking-[0.2em] opacity-50 select-none">seconds</div>
-		</div>
-
-		<!-- Controls -->
-		<div id="controls-panel" class="fixed bottom-8 left-1/2 flex -translate-x-1/2 flex-col gap-4 rounded-3xl bg-zinc-100/80 p-6 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:bg-zinc-100 hover:opacity-100 dark:bg-zinc-900/80 dark:hover:bg-zinc-900 opacity-0 hover:opacity-100 group w-[90vw] max-w-md border border-white/20">
-			
-			<!-- Top Row: Mode & Unit -->
-			<div class="flex items-center justify-between gap-2">
-				<button id="mode-toggle" class="flex-1 rounded-xl bg-white px-3 py-2 text-sm font-medium shadow-sm transition hover:bg-zinc-50 dark:bg-zinc-800 dark:hover:bg-zinc-700 outline-none focus:ring-2 focus:ring-blue-500/50">
-					Countdown
-				</button>
-				<select id="unit-select" class="flex-1 rounded-xl bg-white px-3 py-2 text-sm font-medium shadow-sm outline-none transition hover:bg-zinc-50 focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800 dark:hover:bg-zinc-700">
-					<optgroup label="Short Duration">
-						<option value="seconds">Seconds</option>
-						<option value="minutes">Minutes</option>
-						<option value="hours">Hours</option>
-						<option value="ms">MM:SS</option>
-						<option value="hms">HH:MM:SS</option>
-					</optgroup>
-					<optgroup label="Long Duration">
-						<option value="days">Days</option>
-						<option value="weeks">Weeks</option>
-						<option value="months">Months</option>
-						<option value="years">Years</option>
-						<option value="dhms">d HH:MM:SS</option>
-						<option value="full">Full (Y M D...)</option>
-					</optgroup>
-				</select>
-			</div>
-
-			<hr class="border-zinc-200 dark:border-zinc-800" />
-
-			<!-- Input Method Tabs -->
-			<div class="flex gap-2 rounded-xl bg-zinc-200/50 p-1 dark:bg-zinc-800/50">
-				<button data-tab="date" class="tab-btn flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:bg-white/50 dark:hover:bg-zinc-700/50 data-[active=true]:bg-white data-[active=true]:shadow-sm dark:data-[active=true]:bg-zinc-700">
-					Target Date
-				</button>
-				<button data-tab="duration" class="tab-btn flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all hover:bg-white/50 dark:hover:bg-zinc-700/50 data-[active=true]:bg-white data-[active=true]:shadow-sm dark:data-[active=true]:bg-zinc-700">
-					Duration
-				</button>
-			</div>
-
-			<!-- Date Input -->
-			<div id="tab-content-date" class="tab-content">
-				<input type="datetime-local" id="date-picker" class="w-full rounded-xl bg-white px-4 py-3 font-mono text-sm shadow-sm outline-none transition hover:bg-zinc-50 focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800 dark:hover:bg-zinc-700 accent-blue-500" />
-			</div>
-
-			<!-- Duration Input -->
-			<div id="tab-content-duration" class="tab-content hidden flex-col gap-3">
-				<div class="grid grid-cols-4 gap-2">
-					<div class="flex flex-col gap-1">
-						<input type="number" id="dur-d" placeholder="0" min="0" class="w-full rounded-lg bg-white px-2 py-2 text-center font-mono shadow-sm outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800" />
-						<label class="text-center text-[10px] uppercase text-zinc-500">Days</label>
-					</div>
-					<div class="flex flex-col gap-1">
-						<input type="number" id="dur-h" placeholder="0" min="0" class="w-full rounded-lg bg-white px-2 py-2 text-center font-mono shadow-sm outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800" />
-						<label class="text-center text-[10px] uppercase text-zinc-500">Hours</label>
-					</div>
-					<div class="flex flex-col gap-1">
-						<input type="number" id="dur-m" placeholder="0" min="0" class="w-full rounded-lg bg-white px-2 py-2 text-center font-mono shadow-sm outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800" />
-						<label class="text-center text-[10px] uppercase text-zinc-500">Mins</label>
-					</div>
-					<div class="flex flex-col gap-1">
-						<input type="number" id="dur-s" placeholder="0" min="0" class="w-full rounded-lg bg-white px-2 py-2 text-center font-mono shadow-sm outline-none focus:ring-2 focus:ring-blue-500/50 dark:bg-zinc-800" />
-						<label class="text-center text-[10px] uppercase text-zinc-500">Secs</label>
-					</div>
-				</div>
-				<button id="set-duration-btn" class="w-full rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-md transition hover:bg-blue-700 active:scale-95">
-					Start Timer
-				</button>
-			</div>
-			
-			<div class="text-center text-[10px] text-zinc-400 dark:text-zinc-500">Hover to configure</div>
+<Layout title="Flexible Timer">
+	<div class="fixed inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+		<div id="display-value" class="w-full px-4 text-center font-bold leading-tight tracking-tight text-zinc-900 dark:text-zinc-50">
+			請先完成設定
 		</div>
 	</div>
+
+	<div id="display-meta" class="fixed bottom-8 left-0 right-0 text-center text-sm text-zinc-500 dark:text-zinc-400">
+		尚未指定時間點
+	</div>
+
+	<div id="done-behavior-hint" class="fixed bottom-8 left-0 right-0 text-center text-xs text-zinc-400 dark:text-zinc-500 hidden">
+		已達時間點
+	</div>
+
+	<button id="edit-config-btn" type="button" class="fixed top-4 right-4 z-40 rounded-xl bg-zinc-200/80 p-3 text-zinc-600 backdrop-blur-sm transition hover:bg-zinc-300 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:bg-zinc-700" title="設定">
+		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1a2 2 0 0 0 2.73V20 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+	</button>
+
+	<dialog id="config-dialog" class="m-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl backdrop:bg-black/30 dark:border-zinc-800 dark:bg-zinc-900 [&::backdrop]:bg-black/50 [&::backdrop]:backdrop-blur-sm">
+		<div class="mb-6">
+			<h1 class="text-2xl font-bold tracking-tight">計時器設定</h1>
+			<p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+				未來時間會顯示為倒數；過去或現在會顯示為正數。也可以直接指定一段倒數時間。
+			</p>
+		</div>
+
+		<div class="space-y-6">
+			<div>
+				<label class="mb-2 block text-sm font-semibold">設定方式</label>
+				<div class="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
+					<button id="method-point-btn" type="button" class="method-btn rounded-xl px-4 py-2.5 text-sm font-medium transition data-[active=true]:bg-white data-[active=true]:shadow-sm dark:data-[active=true]:bg-zinc-700" data-method="point" data-active="true">
+						指定時間點
+					</button>
+					<button id="method-duration-btn" type="button" class="method-btn rounded-xl px-4 py-2.5 text-sm font-medium transition data-[active=true]:bg-white data-[active=true]:shadow-sm dark:data-[active=true]:bg-zinc-700" data-method="duration" data-active="false">
+						倒數一段時間
+					</button>
+				</div>
+			</div>
+
+			<div id="panel-point" class="space-y-3">
+				<div>
+					<label for="point-input" class="mb-2 block text-sm font-semibold">時間點</label>
+					<input id="point-input" type="datetime-local" class="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm outline-none ring-0 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+				</div>
+				<p class="text-xs leading-6 text-zinc-500 dark:text-zinc-400">
+					輸入未來時間會變成倒數；輸入現在或過去時間會變成正數。
+				</p>
+			</div>
+
+			<div id="panel-duration" class="hidden space-y-3">
+				<div>
+					<label class="mb-2 block text-sm font-semibold">倒數長度</label>
+					<div class="grid grid-cols-4 gap-2">
+						<div>
+							<input id="dur-year" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+							<div class="mt-1 text-center text-[11px] text-zinc-500">年</div>
+						</div>
+						<div>
+							<input id="dur-month" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+							<div class="mt-1 text-center text-[11px] text-zinc-500">月</div>
+						</div>
+						<div>
+							<input id="dur-week" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+							<div class="mt-1 text-center text-[11px] text-zinc-500">週</div>
+						</div>
+						<div>
+							<input id="dur-day" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+							<div class="mt-1 text-center text-[11px] text-zinc-500">日</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="grid grid-cols-4 gap-2">
+					<div>
+						<input id="dur-hour" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+						<div class="mt-1 text-center text-[11px] text-zinc-500">時</div>
+					</div>
+					<div>
+						<input id="dur-minute" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+						<div class="mt-1 text-center text-[11px] text-zinc-500">分</div>
+					</div>
+					<div>
+						<input id="dur-second" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+						<div class="mt-1 text-center text-[11px] text-zinc-500">秒</div>
+					</div>
+					<div>
+						<input id="dur-ms" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+						<div class="mt-1 text-center text-[11px] text-zinc-500">毫秒</div>
+					</div>
+				</div>
+
+				<p class="text-xs leading-6 text-zinc-500 dark:text-zinc-400">
+					底層會轉換成「現在之後的某個時間點」。月份與年份會以日曆方式遞增。
+				</p>
+			</div>
+
+			<div>
+				<label class="mb-2 block text-sm font-semibold">顯示單位</label>
+				<div class="grid grid-cols-3 gap-2 sm:grid-cols-5">
+					<label class="unit-chip"><input type="checkbox" value="year" checked /> <span>年</span></label>
+					<label class="unit-chip"><input type="checkbox" value="month" checked /> <span>月</span></label>
+					<label class="unit-chip"><input type="checkbox" value="week" checked /> <span>週</span></label>
+					<label class="unit-chip"><input type="checkbox" value="day" checked /> <span>日</span></label>
+					<label class="unit-chip"><input type="checkbox" value="hour" checked /> <span>時</span></label>
+					<label class="unit-chip"><input type="checkbox" value="minute" checked /> <span>分</span></label>
+					<label class="unit-chip"><input type="checkbox" value="second" checked /> <span>秒</span></label>
+					<label class="unit-chip"><input type="checkbox" value="millisecond" /> <span>毫秒</span></label>
+				</div>
+				<p class="mt-2 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
+					可任意組合，例如年日、年月週日、年週日、時分秒毫秒。
+				</p>
+			</div>
+
+			<div>
+				<label class="mb-2 block text-sm font-semibold">倒數結束時</label>
+				<div class="space-y-3 rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-950/70">
+					<div class="grid grid-cols-2 gap-2">
+						<label class="finish-mode-card"><input type="radio" name="finish-mode" value="countup" checked /> <span>轉成正數</span></label>
+						<label class="finish-mode-card"><input type="radio" name="finish-mode" value="stop" /> <span>停下</span></label>
+					</div>
+
+					<div id="stop-behavior-wrap" class="hidden">
+						<label class="mb-2 block text-xs font-semibold tracking-wide text-zinc-500">停下後顯示方式</label>
+						<div class="grid grid-cols-3 gap-2">
+							<label class="finish-mode-card text-sm"><input type="radio" name="stop-behavior" value="freeze" checked /> <span>閃爍</span></label>
+							<label class="finish-mode-card text-sm"><input type="radio" name="stop-behavior" value="zero" /> <span>歸零</span></label>
+							<label class="finish-mode-card text-sm"><input type="radio" name="stop-behavior" value="reset" /> <span>重置</span></label>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="flex gap-3 pt-2">
+				<button id="apply-btn" type="button" class="flex-1 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]">
+					開始
+				</button>
+				<button id="reset-btn" type="button" class="rounded-2xl border border-zinc-300 px-5 py-3 text-sm font-semibold transition hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
+					重設
+				</button>
+			</div>
+		</div>
+	</dialog>
 </Layout>
+
+<style>
+	.unit-chip,
+	.finish-mode-card {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.45rem;
+		border-radius: 1rem;
+		border: 1px solid rgb(212 212 216);
+		background: white;
+		padding: 0.7rem 0.8rem;
+		font-size: 0.875rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: 180ms ease;
+		user-select: none;
+	}
+
+	.dark .unit-chip,
+	.dark .finish-mode-card {
+		border-color: rgb(63 63 70);
+		background: rgb(24 24 27);
+	}
+
+	.unit-chip:has(input:checked),
+	.finish-mode-card:has(input:checked) {
+		border-color: rgb(59 130 246);
+		box-shadow: 0 0 0 4px rgb(59 130 246 / 0.12);
+		color: rgb(37 99 235);
+	}
+
+	.dark .unit-chip:has(input:checked),
+	.dark .finish-mode-card:has(input:checked) {
+		color: rgb(147 197 253);
+	}
+
+	.unit-chip input,
+	.finish-mode-card input {
+		accent-color: rgb(59 130 246);
+	}
+
+	@keyframes blink-timer {
+		0%, 100% { opacity: 1; }
+		50% { opacity: 0.18; }
+	}
+
+	.blinking {
+		animation: blink-timer 0.9s step-end infinite;
+	}
+
+	#display-value {
+		font-size: clamp(3rem, 20vw, 18rem);
+	}
+
+	#config-dialog {
+		width: 90vw;
+		max-width: 28rem;
+	}
+
+	#config-dialog[open] {
+		animation: dialog-in 0.2s ease-out;
+	}
+
+	@keyframes dialog-in {
+		from {
+			opacity: 0;
+			transform: scale(0.95) translateY(-10px);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1) translateY(0);
+		}
+	}
+</style>
 
 <script>
 	import { URLStore } from '../lib/url-store';
 
-	type Mode = 'countdown' | 'countup';
-	type Unit = 'seconds' | 'days' | 'weeks' | 'hours' | 'minutes' | 'hms' | 'ms' | 'dhms' | 'years' | 'months' | 'full';
+	type InputMethod = 'point' | 'duration';
+	type FinishMode = 'countup' | 'stop';
+	type StopBehavior = 'freeze' | 'zero' | 'reset';
+	type UnitKey = 'year' | 'month' | 'week' | 'day' | 'hour' | 'minute' | 'second' | 'millisecond';
 
-	interface TimerState {
-		mode: Mode;
-		date: string; // ISO string
-		unit: Unit;
+	interface TimerConfig {
+		inputMethod: InputMethod;
+		targetIso: string | null;
+		duration: Record<UnitKey, number>;
+		displayUnits: UnitKey[];
+		finishMode: FinishMode;
+		stopBehavior: StopBehavior;
+		started: boolean;
 	}
 
-	// Default to next hour
-	const now = new Date();
-	now.setHours(now.getHours() + 1, 0, 0, 0);
+	interface DurationBreakdown {
+		year: number;
+		month: number;
+		week: number;
+		day: number;
+		hour: number;
+		minute: number;
+		second: number;
+		millisecond: number;
+	}
 
-	const defaultState: TimerState = {
-		mode: 'countdown',
-		date: now.toISOString(),
-		unit: 'seconds',
+	const UNIT_LABELS: Record<UnitKey, string> = {
+		year: '年',
+		month: '月',
+		week: '週',
+		day: '日',
+		hour: '時',
+		minute: '分',
+		second: '秒',
+		millisecond: '毫秒',
 	};
 
-	const store = new URLStore<TimerState>(defaultState);
-
-	// Elements
-	const timeDisplay = document.getElementById('time-display')!;
-	const unitLabel = document.getElementById('unit-label')!;
-	const modeToggle = document.getElementById('mode-toggle')!;
-	const unitSelect = document.getElementById('unit-select') as HTMLSelectElement;
-	const datePicker = document.getElementById('date-picker') as HTMLInputElement;
-	
-	// Tab Elements
-	const tabBtns = document.querySelectorAll('.tab-btn');
-	const tabContentDate = document.getElementById('tab-content-date')!;
-	const tabContentDuration = document.getElementById('tab-content-duration')!;
-	
-	// Duration Elements
-	const durInputs = {
-		d: document.getElementById('dur-d') as HTMLInputElement,
-		h: document.getElementById('dur-h') as HTMLInputElement,
-		m: document.getElementById('dur-m') as HTMLInputElement,
-		s: document.getElementById('dur-s') as HTMLInputElement,
+	const ORDER: UnitKey[] = ['year', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond'];
+	const MS = {
+		week: 7 * 24 * 60 * 60 * 1000,
+		day: 24 * 60 * 60 * 1000,
+		hour: 60 * 60 * 1000,
+		minute: 60 * 1000,
+		second: 1000,
 	};
-	const setDurationBtn = document.getElementById('set-duration-btn')!;
 
-	// State
-	let state = store.get();
+	const defaultFuture = new Date();
+	defaultFuture.setHours(defaultFuture.getHours() + 1, 0, 0, 0);
 
-	// --- Helper Functions ---
+	const defaultConfig: TimerConfig = {
+		inputMethod: 'point',
+		targetIso: defaultFuture.toISOString(),
+		duration: {
+			year: 0,
+			month: 0,
+			week: 0,
+			day: 0,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			millisecond: 0,
+		},
+		displayUnits: ['year', 'month', 'week', 'day', 'hour', 'minute', 'second'],
+		finishMode: 'countup',
+		stopBehavior: 'freeze',
+		started: false,
+	};
 
-	function toLocalISOString(date: Date): string {
-		const pad = (n: number) => n.toString().padStart(2, '0');
-		return (
-			date.getFullYear() +
-			'-' +
-			pad(date.getMonth() + 1) +
-			'-' +
-			pad(date.getDate()) +
-			'T' +
-			pad(date.getHours()) +
-			':' +
-			pad(date.getMinutes())
-		);
+	const store = new URLStore<TimerConfig>(defaultConfig);
+
+	const els = {
+		displayValue: document.getElementById('display-value') as HTMLDivElement,
+		displayMeta: document.getElementById('display-meta') as HTMLDivElement,
+		doneBehaviorHint: document.getElementById('done-behavior-hint') as HTMLDivElement,
+		methodButtons: Array.from(document.querySelectorAll('.method-btn')) as HTMLButtonElement[],
+		panelPoint: document.getElementById('panel-point') as HTMLDivElement,
+		panelDuration: document.getElementById('panel-duration') as HTMLDivElement,
+		pointInput: document.getElementById('point-input') as HTMLInputElement,
+		applyBtn: document.getElementById('apply-btn') as HTMLButtonElement,
+		resetBtn: document.getElementById('reset-btn') as HTMLButtonElement,
+		editConfigBtn: document.getElementById('edit-config-btn') as HTMLButtonElement,
+		stopBehaviorWrap: document.getElementById('stop-behavior-wrap') as HTMLDivElement,
+		configDialog: document.getElementById('config-dialog') as HTMLDialogElement,
+		durationInputs: {
+			year: document.getElementById('dur-year') as HTMLInputElement,
+			month: document.getElementById('dur-month') as HTMLInputElement,
+			week: document.getElementById('dur-week') as HTMLInputElement,
+			day: document.getElementById('dur-day') as HTMLInputElement,
+			hour: document.getElementById('dur-hour') as HTMLInputElement,
+			minute: document.getElementById('dur-minute') as HTMLInputElement,
+			second: document.getElementById('dur-second') as HTMLInputElement,
+			millisecond: document.getElementById('dur-ms') as HTMLInputElement,
+		},
+		unitChecks: Array.from(document.querySelectorAll('.unit-chip input[type="checkbox"]')) as HTMLInputElement[],
+		finishModeRadios: Array.from(document.querySelectorAll('input[name="finish-mode"]')) as HTMLInputElement[],
+		stopBehaviorRadios: Array.from(document.querySelectorAll('input[name="stop-behavior"]')) as HTMLInputElement[],
+	};
+
+	let config = loadConfig();
+	let frozenDisplay: string | null = null;
+	let resetReferenceIso: string | null = null;
+
+	function loadConfig(): TimerConfig {
+		const data = store.get();
+		return {
+			...structuredClone(defaultConfig),
+			...data,
+			duration: {
+				...structuredClone(defaultConfig).duration,
+				...(data.duration ?? {}),
+			},
+			displayUnits: Array.isArray(data.displayUnits) && data.displayUnits.length > 0
+				? data.displayUnits.filter((u): u is UnitKey => ORDER.includes(u as UnitKey))
+				: structuredClone(defaultConfig).displayUnits,
+		};
 	}
 
-	// --- Rendering ---
+	function saveConfig() {
+		store.set(config);
+	}
 
-	function renderControls() {
-		modeToggle.textContent = state.mode === 'countdown' ? 'Countdown to' : 'Countup from';
-		unitSelect.value = state.unit;
-		
-		if (document.activeElement !== datePicker) {
-			const date = new Date(state.date);
-			if (!isNaN(date.getTime())) {
-				datePicker.value = toLocalISOString(date);
+	function pad(n: number, size = 2) {
+		return String(n).padStart(size, '0');
+	}
+
+	function toLocalInputValue(date: Date) {
+		return [
+			date.getFullYear(),
+			pad(date.getMonth() + 1),
+			pad(date.getDate()),
+		].join('-') + 'T' + [pad(date.getHours()), pad(date.getMinutes())].join(':');
+	}
+
+	function addCalendarDuration(base: Date, duration: Record<UnitKey, number>) {
+		const d = new Date(base.getTime());
+		if (duration.year) d.setFullYear(d.getFullYear() + duration.year);
+		if (duration.month) d.setMonth(d.getMonth() + duration.month);
+		const extraDays = (duration.week || 0) * 7 + (duration.day || 0);
+		if (extraDays) d.setDate(d.getDate() + extraDays);
+		if (duration.hour) d.setHours(d.getHours() + duration.hour);
+		if (duration.minute) d.setMinutes(d.getMinutes() + duration.minute);
+		if (duration.second) d.setSeconds(d.getSeconds() + duration.second);
+		if (duration.millisecond) d.setMilliseconds(d.getMilliseconds() + duration.millisecond);
+		return d;
+	}
+
+	function diffCalendar(from: Date, to: Date): DurationBreakdown {
+		const forward = to.getTime() >= from.getTime();
+		let start = forward ? new Date(from.getTime()) : new Date(to.getTime());
+		const end = forward ? new Date(to.getTime()) : new Date(from.getTime());
+
+		const out: DurationBreakdown = {
+			year: 0,
+			month: 0,
+			week: 0,
+			day: 0,
+			hour: 0,
+			minute: 0,
+			second: 0,
+			millisecond: 0,
+		};
+
+		while (true) {
+			const next = new Date(start.getTime());
+			next.setFullYear(next.getFullYear() + 1);
+			if (next <= end) {
+				out.year++;
+				start = next;
+			} else break;
+		}
+
+		while (true) {
+			const next = new Date(start.getTime());
+			next.setMonth(next.getMonth() + 1);
+			if (next <= end) {
+				out.month++;
+				start = next;
+			} else break;
+		}
+
+		let rest = end.getTime() - start.getTime();
+		out.week = Math.floor(rest / MS.week);
+		rest -= out.week * MS.week;
+		out.day = Math.floor(rest / MS.day);
+		rest -= out.day * MS.day;
+		out.hour = Math.floor(rest / MS.hour);
+		rest -= out.hour * MS.hour;
+		out.minute = Math.floor(rest / MS.minute);
+		rest -= out.minute * MS.minute;
+		out.second = Math.floor(rest / MS.second);
+		rest -= out.second * MS.second;
+		out.millisecond = rest;
+
+		return out;
+	}
+
+	function rebalanceForSelection(diff: DurationBreakdown, selection: UnitKey[]) {
+		const map: DurationBreakdown = { ...diff };
+
+		if (!selection.includes('month')) {
+			map.week += Math.floor(map.month * 30.436875 / 7);
+			map.day += Math.round((map.month * 30.436875) % 7);
+			map.month = 0;
+		}
+
+		if (!selection.includes('week')) {
+			map.day += map.week * 7;
+			map.week = 0;
+		}
+
+		if (!selection.includes('day')) {
+			map.hour += map.day * 24;
+			map.day = 0;
+		}
+
+		if (!selection.includes('hour')) {
+			map.minute += map.hour * 60;
+			map.hour = 0;
+		}
+
+		if (!selection.includes('minute')) {
+			map.second += map.minute * 60;
+			map.minute = 0;
+		}
+
+		if (!selection.includes('second')) {
+			map.millisecond += map.second * 1000;
+			map.second = 0;
+		}
+
+		if (!selection.includes('year')) {
+			map.month += map.year * 12;
+			map.year = 0;
+		}
+
+		if (!selection.includes('month')) {
+			map.week += Math.floor(map.month * 30.436875 / 7);
+			map.day += Math.round((map.month * 30.436875) % 7);
+			map.month = 0;
+		}
+
+		if (!selection.includes('millisecond')) {
+			map.second += Math.floor(map.millisecond / 1000);
+			map.millisecond = map.millisecond % 1000;
+		}
+
+		return map;
+	}
+
+	function buildDisplay(diff: DurationBreakdown, selectedUnits: UnitKey[]) {
+		const normalizedSelection = ORDER.filter((key) => selectedUnits.includes(key));
+		const rebalance = rebalanceForSelection(diff, normalizedSelection);
+		const parts = normalizedSelection
+			.map((key) => ({ key, value: rebalance[key] }))
+			.filter(({ value }, index) => value !== 0 || index === normalizedSelection.length - 1);
+
+		if (parts.length === 0) return '0 秒';
+		return parts.map(({ key, value }) => `${value.toLocaleString()} ${UNIT_LABELS[key]}`).join(' ');
+	}
+
+	function setMethod(method: InputMethod) {
+		config.inputMethod = method;
+		els.methodButtons.forEach((btn) => {
+			btn.dataset.active = String(btn.dataset.method === method);
+		});
+		els.panelPoint.classList.toggle('hidden', method !== 'point');
+		els.panelDuration.classList.toggle('hidden', method !== 'duration');
+	}
+
+	function syncForm() {
+		setMethod(config.inputMethod);
+
+		if (config.targetIso) {
+			const d = new Date(config.targetIso);
+			if (!Number.isNaN(d.getTime())) {
+				els.pointInput.value = toLocalInputValue(d);
 			}
+		}
+
+		for (const key of ORDER) {
+			if (key in els.durationInputs) {
+				const input = els.durationInputs[key as keyof typeof els.durationInputs];
+				if (input) input.value = String(config.duration[key] ?? 0);
+			}
+		}
+
+		els.unitChecks.forEach((checkbox) => {
+			checkbox.checked = config.displayUnits.includes(checkbox.value as UnitKey);
+		});
+
+		els.finishModeRadios.forEach((radio) => {
+			radio.checked = radio.value === config.finishMode;
+		});
+		els.stopBehaviorRadios.forEach((radio) => {
+			radio.checked = radio.value === config.stopBehavior;
+		});
+
+		updateFinishBehaviorUI();
+	}
+
+	function updateFinishBehaviorUI() {
+		els.stopBehaviorWrap.classList.toggle('hidden', config.finishMode !== 'stop');
+	}
+
+	function collectConfigFromForm() {
+		const selectedUnits = els.unitChecks
+			.filter((checkbox) => checkbox.checked)
+			.map((checkbox) => checkbox.value as UnitKey);
+
+		config.displayUnits = selectedUnits.length > 0 ? selectedUnits : ['second'];
+
+		const finishMode = els.finishModeRadios.find((radio) => radio.checked)?.value as FinishMode | undefined;
+		const stopBehavior = els.stopBehaviorRadios.find((radio) => radio.checked)?.value as StopBehavior | undefined;
+		config.finishMode = finishMode ?? 'countup';
+		config.stopBehavior = stopBehavior ?? 'freeze';
+
+		if (config.inputMethod === 'point') {
+			const value = els.pointInput.value;
+			config.targetIso = value ? new Date(value).toISOString() : null;
+		} else {
+			for (const [key, input] of Object.entries(els.durationInputs) as [UnitKey, HTMLInputElement][]) {
+				config.duration[key] = Math.max(0, Number.parseInt(input.value || '0', 10) || 0);
+			}
+			const now = new Date();
+			config.targetIso = addCalendarDuration(now, config.duration).toISOString();
 		}
 	}
 
-	function updateDisplay() {
+	function resetAll() {
+		config = structuredClone(defaultConfig);
+		frozenDisplay = null;
+		resetReferenceIso = null;
+		syncForm();
+		saveConfig();
+		render();
+	}
+
+	function apply() {
+		collectConfigFromForm();
+		if (!config.targetIso) return;
+		config.started = true;
+		frozenDisplay = null;
+		resetReferenceIso = config.targetIso;
+		saveConfig();
+		els.configDialog.close();
+		render();
+	}
+
+	function formatMeta(target: Date, isFuture: boolean) {
+		const modeText = isFuture ? '倒數中' : '正數中';
+		return `${modeText} · 目標時間 ${target.toLocaleString('zh-TW')}`;
+	}
+
+	function render() {
+		if (!config.started || !config.targetIso) {
+			els.displayValue.textContent = '請先完成設定';
+			els.displayMeta.textContent = '尚未指定時間點';
+			els.displayValue.classList.remove('blinking');
+			els.doneBehaviorHint.classList.add('hidden');
+			els.displayMeta.classList.remove('hidden');
+			return;
+		}
+
 		const now = new Date();
-		const target = new Date(state.date);
-		let diff = 0;
-
-		if (state.mode === 'countdown') {
-			diff = target.getTime() - now.getTime();
-		} else {
-			diff = now.getTime() - target.getTime();
+		const target = new Date(config.targetIso);
+		if (Number.isNaN(target.getTime())) {
+			els.displayValue.textContent = '時間格式錯誤';
+			return;
 		}
 
-		// Calculate value based on unit
-		let value = 0;
-		let formattedValue = '';
-		let labelText = state.unit;
+		const rawDiff = target.getTime() - now.getTime();
+		const isCountdown = rawDiff > 0;
+		const hasReached = rawDiff <= 0;
 
-		const absDiff = Math.abs(diff);
-		const sign = diff < 0 ? '-' : '';
+		els.displayValue.classList.remove('blinking');
+		els.doneBehaviorHint.classList.add('hidden');
+		els.displayMeta.classList.remove('hidden');
 
-		if (state.unit === 'hms' || state.unit === 'ms' || state.unit === 'dhms' || state.unit === 'full') {
-			
-			// For full date breakdown, use calendar math
-			if (state.unit === 'full') {
-				const start = diff > 0 ? now : target;
-				const end = diff > 0 ? target : now;
-				
-				let years = end.getFullYear() - start.getFullYear();
-				let months = end.getMonth() - start.getMonth();
-				let days = end.getDate() - start.getDate();
-				let hours = end.getHours() - start.getHours();
-				let minutes = end.getMinutes() - start.getMinutes();
-				let seconds = end.getSeconds() - start.getSeconds();
+		if (isCountdown) {
+			const breakdown = diffCalendar(now, target);
+			els.displayValue.textContent = buildDisplay(breakdown, config.displayUnits);
+			els.displayMeta.textContent = formatMeta(target, true);
+			return;
+		}
 
-				// Adjust for negative values
-				if (seconds < 0) { seconds += 60; minutes--; }
-				if (minutes < 0) { minutes += 60; hours--; }
-				if (hours < 0) { hours += 24; days--; }
-				if (days < 0) {
-					// Days in previous month
-					const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
-					days += prevMonth.getDate();
-					months--;
+		if (hasReached && config.finishMode === 'stop') {
+			els.doneBehaviorHint.classList.remove('hidden');
+			els.displayMeta.classList.add('hidden');
+
+			if (config.stopBehavior === 'freeze') {
+				if (!frozenDisplay) {
+					const exactTarget = new Date(target.getTime());
+					const breakdown = diffCalendar(exactTarget, exactTarget);
+					frozenDisplay = buildDisplay(breakdown, config.displayUnits);
 				}
-				if (months < 0) { months += 12; years--; }
-
-				const pad = (n: number) => n.toString().padStart(2, '0');
-				
-				// Build string: "1y 2m 3d 04:05:06"
-				// Only show units if they are > 0 to keep it cleaner? Or always show?
-				// "1y 0m 0d..." looks weird. Let's show all for consistency.
-				formattedValue = `${sign}${years}y ${months}m ${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-				labelText = 'time';
-				timeDisplay.style.fontSize = '8vw'; // Smaller font for long string
-			} else {
-				const totalSeconds = Math.floor(absDiff / 1000);
-				const days = Math.floor(totalSeconds / 86400);
-				const hours = Math.floor((totalSeconds % 86400) / 3600);
-				const minutes = Math.floor((totalSeconds % 3600) / 60);
-				const seconds = totalSeconds % 60;
-
-				const pad = (n: number) => n.toString().padStart(2, '0');
-
-				if (state.unit === 'dhms') {
-					formattedValue = `${sign}${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-					labelText = 'time';
-					timeDisplay.style.fontSize = '10vw';
-				} else if (state.unit === 'hms') {
-					// For very long durations, hours can be > 99, so we let it grow naturally
-					const totalHours = Math.floor(totalSeconds / 3600);
-					formattedValue = `${sign}${totalHours}:${pad(minutes)}:${pad(seconds)}`;
-					labelText = 'time';
-					timeDisplay.style.fontSize = '12vw';
-				} else {
-					// ms: Minutes can be large
-					const totalMinutes = Math.floor(totalSeconds / 60);
-					formattedValue = `${sign}${totalMinutes}:${pad(seconds)}`;
-					labelText = 'time';
-					timeDisplay.style.fontSize = '12vw';
-				}
+				els.displayValue.textContent = frozenDisplay;
+				els.displayValue.classList.add('blinking');
+				els.doneBehaviorHint.textContent = '已達時間點 · 閃爍';
+				return;
 			}
-		} else {
-			// Restore default large font
-			timeDisplay.style.fontSize = '15vw';
-			
-			switch (state.unit) {
-				case 'seconds':
-					value = diff / 1000;
-					formattedValue = Math.floor(value).toLocaleString();
-					break;
-				case 'minutes':
-					value = diff / (1000 * 60);
-					formattedValue = value.toFixed(2);
-					break;
-				case 'hours':
-					value = diff / (1000 * 60 * 60);
-					formattedValue = value.toFixed(2);
-					break;
-				case 'days':
-					value = diff / (1000 * 60 * 60 * 24);
-					formattedValue = value.toFixed(2);
-					break;
-				case 'weeks':
-					value = diff / (1000 * 60 * 60 * 24 * 7);
-					formattedValue = value.toFixed(2);
-					break;
-				case 'months':
-					// Approx 30.436875 days per month
-					value = diff / (1000 * 60 * 60 * 24 * 30.436875);
-					formattedValue = value.toFixed(2);
-					break;
-				case 'years':
-					// Approx 365.2425 days per year
-					value = diff / (1000 * 60 * 60 * 24 * 365.2425);
-					formattedValue = value.toFixed(2);
-					break;
+
+			if (config.stopBehavior === 'zero') {
+				els.displayValue.textContent = buildDisplay({ year: 0, month: 0, week: 0, day: 0, hour: 0, minute: 0, second: 0, millisecond: 0 }, config.displayUnits);
+				els.doneBehaviorHint.textContent = '已達時間點 · 歸零';
+				return;
+			}
+
+			if (config.stopBehavior === 'reset') {
+				const ref = resetReferenceIso ? new Date(resetReferenceIso) : target;
+				const nowForReset = new Date();
+				const nextTarget = addCalendarDuration(nowForReset, config.duration);
+				config.targetIso = nextTarget.toISOString();
+				saveConfig();
+				els.doneBehaviorHint.textContent = '已達時間點 · 已重置';
+				return;
 			}
 		}
 
-		timeDisplay.textContent = formattedValue;
-
-		// Dynamic label
-		let suffix = '';
-		if (state.mode === 'countdown') {
-			suffix = diff < 0 ? 'overdue' : 'remaining';
-		} else {
-			suffix = diff < 0 ? 'until start' : 'elapsed';
-		}
-		
-		unitLabel.textContent = `${labelText} ${suffix}`;
+		const breakdown = diffCalendar(target, now);
+		els.displayValue.textContent = '+' + buildDisplay(breakdown, config.displayUnits);
+		els.displayMeta.textContent = formatMeta(target, false);
 	}
 
+	store.subscribe((newConfig) => {
+		config = newConfig;
+		syncForm();
+		render();
+	});
 
-	function save() {
-		store.set(state);
-		renderControls(); 
-		updateDisplay();
-	}
-
-	// --- Logic ---
-
-	function handleSetDuration() {
-		const d = parseInt(durInputs.d.value) || 0;
-		const h = parseInt(durInputs.h.value) || 0;
-		const m = parseInt(durInputs.m.value) || 0;
-		const s = parseInt(durInputs.s.value) || 0;
-
-		const totalMs = ((d * 24 * 60 * 60) + (h * 60 * 60) + (m * 60) + s) * 1000;
-
-		if (totalMs === 0) return;
-
-		const now = new Date();
-		let targetTime: Date;
-
-		if (state.mode === 'countdown') {
-			targetTime = new Date(now.getTime() + totalMs);
-		} else {
-			// For countup, "10 minutes" usually means "Start counting up from 10 minutes ago"
-			targetTime = new Date(now.getTime() - totalMs);
-		}
-
-		state.date = targetTime.toISOString();
-		save();
-		
-		// Optional: Clear inputs or give feedback
-		// durInputs.d.value = ''; ...
-	}
-
-	// --- Event Listeners ---
-
-	// Tab Switching
-	tabBtns.forEach(btn => {
+	els.methodButtons.forEach((btn) => {
 		btn.addEventListener('click', () => {
-			const tab = (btn as HTMLElement).dataset.tab;
-			
-			// Update Buttons
-			tabBtns.forEach(b => b.setAttribute('data-active', 'false'));
-			btn.setAttribute('data-active', 'true');
-
-			// Update Content
-			if (tab === 'date') {
-				tabContentDate.classList.remove('hidden');
-				tabContentDuration.classList.add('hidden');
-				tabContentDuration.classList.remove('flex');
-			} else {
-				tabContentDate.classList.add('hidden');
-				tabContentDuration.classList.remove('hidden');
-				tabContentDuration.classList.add('flex');
-			}
+			setMethod(btn.dataset.method as InputMethod);
+			saveConfig();
 		});
 	});
 
-	// Initialize Tabs (Default to Date)
-	tabBtns[0].setAttribute('data-active', 'true');
-
-
-	modeToggle.addEventListener('click', () => {
-		state.mode = state.mode === 'countdown' ? 'countup' : 'countdown';
-		save();
+	els.finishModeRadios.forEach((radio) => {
+		radio.addEventListener('change', () => {
+			config.finishMode = radio.value as FinishMode;
+			updateFinishBehaviorUI();
+			saveConfig();
+		});
 	});
 
-	unitSelect.addEventListener('change', () => {
-		state.unit = unitSelect.value as Unit;
-		save();
+	els.stopBehaviorRadios.forEach((radio) => {
+		radio.addEventListener('change', () => {
+			config.stopBehavior = radio.value as StopBehavior;
+			saveConfig();
+		});
 	});
 
-	datePicker.addEventListener('change', () => {
-		if (datePicker.value) {
-			const d = new Date(datePicker.value);
-			state.date = d.toISOString();
-			save();
+	els.applyBtn.addEventListener('click', apply);
+	els.resetBtn.addEventListener('click', resetAll);
+
+	els.editConfigBtn.addEventListener('click', () => {
+		els.configDialog.showModal();
+	});
+
+	els.configDialog.addEventListener('click', (e) => {
+		if (e.target === els.configDialog) {
+			els.configDialog.close();
 		}
 	});
 
-	setDurationBtn.addEventListener('click', handleSetDuration);
+	syncForm();
+	render();
 
-	// External updates
-	store.subscribe((newState) => {
-		state = newState;
-		renderControls();
-		updateDisplay();
-	});
-
-	// --- Init ---
-	renderControls();
-	
-	// Animation Loop
 	function loop() {
-		updateDisplay();
+		render();
 		requestAnimationFrame(loop);
 	}
 	loop();
-
 </script>
