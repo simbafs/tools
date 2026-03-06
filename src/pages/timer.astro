@@ -21,17 +21,22 @@ import Layout from '../layouts/Layout.astro';
 		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1a2 2 0 0 0 2.73V20 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
 	</button>
 
-	<dialog id="config-dialog" class="m-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl backdrop:bg-black/30 dark:border-zinc-800 dark:bg-zinc-900 [&::backdrop]:bg-black/50 [&::backdrop]:backdrop-blur-sm">
-		<div class="mb-6">
-			<h1 class="text-2xl font-bold tracking-tight">計時器設定</h1>
-			<p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-				未來時間會顯示為倒數；過去或現在會顯示為正數。也可以直接指定一段倒數時間。
-			</p>
+	<dialog id="config-dialog" class="m-auto max-h-[90vh] overflow-y-auto rounded-3xl border border-zinc-200/50 bg-white p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] backdrop:bg-black/30 dark:border-zinc-700/50 dark:bg-zinc-900 [&::backdrop]:bg-black/50 [&::backdrop]:backdrop-blur-sm">
+		<div class="mb-8 flex items-start justify-between sticky top-0 bg-white dark:bg-zinc-900 pb-4 -mx-8 px-8 border-b border-zinc-100 dark:border-zinc-800">
+			<div>
+				<h1 class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">計時器設定</h1>
+				<p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+					設定會立即生效，無需確認
+				</p>
+			</div>
+			<button type="button" id="close-config-btn" class="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition" title="關閉">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+			</button>
 		</div>
 
-		<div class="space-y-6">
+		<div class="space-y-8">
 			<div>
-				<label class="mb-2 block text-sm font-semibold">設定方式</label>
+				<label class="mb-3 block text-sm font-semibold text-zinc-900 dark:text-zinc-50">設定方式</label>
 				<div class="grid grid-cols-2 gap-2 rounded-2xl bg-zinc-100 p-1 dark:bg-zinc-800">
 					<button id="method-point-btn" type="button" class="method-btn rounded-xl px-4 py-2.5 text-sm font-medium transition data-[active=true]:bg-white data-[active=true]:shadow-sm dark:data-[active=true]:bg-zinc-700" data-method="point" data-active="true">
 						指定時間點
@@ -42,56 +47,51 @@ import Layout from '../layouts/Layout.astro';
 				</div>
 			</div>
 
-			<div id="panel-point" class="space-y-3">
+			<div id="panel-point" class="space-y-4">
 				<div>
-					<label for="point-input" class="mb-2 block text-sm font-semibold">時間點</label>
-					<input id="point-input" type="datetime-local" class="w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-sm outline-none ring-0 transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+					<label for="point-input" class="mb-2 block text-sm font-semibold text-zinc-900 dark:text-zinc-50">時間點</label>
+					<input id="point-input" type="datetime-local" class="w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400" />
 				</div>
 				<p class="text-xs leading-6 text-zinc-500 dark:text-zinc-400">
 					輸入未來時間會變成倒數；輸入現在或過去時間會變成正數。
 				</p>
 			</div>
 
-			<div id="panel-duration" class="hidden space-y-3">
+			<div id="panel-duration" class="hidden space-y-4">
 				<div>
-					<label class="mb-2 block text-sm font-semibold">倒數長度</label>
-					<div class="grid grid-cols-4 gap-2">
+					<label class="mb-3 block text-sm font-semibold text-zinc-900 dark:text-zinc-50">倒數長度</label>
+					<div class="grid grid-cols-8 gap-2">
 						<div>
-							<input id="dur-year" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-							<div class="mt-1 text-center text-[11px] text-zinc-500">年</div>
+							<input id="dur-year" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400" />
+							<div class="mt-1 text-center text-xs font-medium text-zinc-600 dark:text-zinc-400">年</div>
 						</div>
 						<div>
-							<input id="dur-month" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-							<div class="mt-1 text-center text-[11px] text-zinc-500">月</div>
+							<input id="dur-month" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400" />
+							<div class="mt-1 text-center text-xs font-medium text-zinc-600 dark:text-zinc-400">月</div>
 						</div>
 						<div>
-							<input id="dur-week" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-							<div class="mt-1 text-center text-[11px] text-zinc-500">週</div>
+							<input id="dur-week" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400" />
+							<div class="mt-1 text-center text-xs font-medium text-zinc-600 dark:text-zinc-400">週</div>
 						</div>
 						<div>
-							<input id="dur-day" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-							<div class="mt-1 text-center text-[11px] text-zinc-500">日</div>
-						</div>
-					</div>
-				</div>
-
-				<div>
-					<div class="grid grid-cols-4 gap-2">
-						<div>
-							<input id="dur-hour" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-							<div class="mt-1 text-center text-[11px] text-zinc-500">時</div>
+							<input id="dur-day" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400" />
+							<div class="mt-1 text-center text-xs font-medium text-zinc-600 dark:text-zinc-400">日</div>
 						</div>
 						<div>
-							<input id="dur-minute" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-							<div class="mt-1 text-center text-[11px] text-zinc-500">分</div>
+							<input id="dur-hour" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400" />
+							<div class="mt-1 text-center text-xs font-medium text-zinc-600 dark:text-zinc-400">時</div>
 						</div>
 						<div>
-							<input id="dur-second" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-							<div class="mt-1 text-center text-[11px] text-zinc-500">秒</div>
+							<input id="dur-minute" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400" />
+							<div class="mt-1 text-center text-xs font-medium text-zinc-600 dark:text-zinc-400">分</div>
 						</div>
 						<div>
-							<input id="dur-ms" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-							<div class="mt-1 text-center text-[11px] text-zinc-500">毫秒</div>
+							<input id="dur-second" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400" />
+							<div class="mt-1 text-center text-xs font-medium text-zinc-600 dark:text-zinc-400">秒</div>
+						</div>
+						<div>
+							<input id="dur-ms" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400" />
+							<div class="mt-1 text-center text-xs font-medium text-zinc-600 dark:text-zinc-400">毫秒</div>
 						</div>
 					</div>
 				</div>
@@ -102,54 +102,54 @@ import Layout from '../layouts/Layout.astro';
 			</div>
 
 			<div>
-				<label class="mb-3 block text-sm font-semibold">顯示格式設定</label>
+				<label class="mb-4 block text-sm font-semibold text-zinc-900 dark:text-zinc-50">顯示格式設定</label>
 				
-				<div class="mb-4">
-					<label class="mb-2 block text-xs font-semibold tracking-wide text-zinc-600 dark:text-zinc-400">快速預設</label>
-					<div id="preset-buttons" class="grid grid-cols-3 gap-2">
-						<button id="preset-btn-1" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset1">
+				<div class="mb-6 pb-6 border-b border-zinc-200 dark:border-zinc-800">
+					<label class="mb-3 block text-xs font-semibold tracking-wide uppercase text-zinc-600 dark:text-zinc-400">快速預設</label>
+					<div id="preset-buttons" class="grid grid-cols-6 gap-2">
+						<button id="preset-btn-1" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-xs font-medium transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-500 dark:hover:bg-zinc-700" data-preset="preset1">
 							完整格式
 						</button>
-						<button id="preset-btn-2" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset2">
+						<button id="preset-btn-2" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-xs font-medium transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-500 dark:hover:bg-zinc-700" data-preset="preset2">
 							斜線格式
 						</button>
-						<button id="preset-btn-3" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset3">
+						<button id="preset-btn-3" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-xs font-medium transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-500 dark:hover:bg-zinc-700" data-preset="preset3">
 							簡短格式
 						</button>
-						<button id="preset-btn-4" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset4">
+						<button id="preset-btn-4" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-xs font-medium transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-500 dark:hover:bg-zinc-700" data-preset="preset4">
 							時分秒
 						</button>
-						<button id="preset-btn-5" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset5">
+						<button id="preset-btn-5" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-xs font-medium transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-500 dark:hover:bg-zinc-700" data-preset="preset5">
 							僅日期
 						</button>
-						<button id="preset-btn-6" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset6">
+						<button id="preset-btn-6" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-xs font-medium transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-500 dark:hover:bg-zinc-700" data-preset="preset6">
 							僅毫秒
 						</button>
 					</div>
 				</div>
 
 				<div>
-					<label class="mb-2 block text-xs font-semibold tracking-wide text-zinc-600 dark:text-zinc-400">自訂單位範本</label>
-					<div id="display-settings-grid" class="grid grid-cols-2 gap-3">
+					<label class="mb-4 block text-xs font-semibold tracking-wide uppercase text-zinc-600 dark:text-zinc-400">自訂單位範本</label>
+					<div id="display-settings-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3">
 						<!-- 動態生成的設定項 -->
 					</div>
 				</div>
 				
-				<p class="mt-3 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
-					支援的 Token：%Y(年)、%M(月)、%W(週)、%D(日)、%h(時,2位)、%m(分,2位)、%s(秒,2位)、%ms(毫秒,3位)
+				<p class="text-xs leading-6 text-zinc-500 dark:text-zinc-400">
+					支援的 Token：%Y (年) · %M (月) · %W (週) · %D (日) · %h (時,2位) · %m (分,2位) · %s (秒,2位) · %ms (毫秒,3位)
 				</p>
 			</div>
 
 			<div>
-				<label class="mb-2 block text-sm font-semibold">倒數結束時</label>
-				<div class="space-y-3 rounded-2xl bg-zinc-50 p-4 dark:bg-zinc-950/70">
+				<label class="mb-4 block text-sm font-semibold text-zinc-900 dark:text-zinc-50">倒數結束時</label>
+				<div class="space-y-4">
 					<div class="grid grid-cols-2 gap-2">
 						<label class="finish-mode-card"><input type="radio" name="finish-mode" value="countup" checked /> <span>轉成正數</span></label>
 						<label class="finish-mode-card"><input type="radio" name="finish-mode" value="stop" /> <span>停下</span></label>
 					</div>
 
 					<div id="stop-behavior-wrap" class="hidden">
-						<label class="mb-2 block text-xs font-semibold tracking-wide text-zinc-500">停下後顯示方式</label>
+						<label class="mb-3 block text-xs font-semibold tracking-wide text-zinc-600 dark:text-zinc-400">停下後顯示方式</label>
 						<div class="grid grid-cols-3 gap-2">
 							<label class="finish-mode-card text-sm"><input type="radio" name="stop-behavior" value="freeze" checked /> <span>閃爍</span></label>
 							<label class="finish-mode-card text-sm"><input type="radio" name="stop-behavior" value="zero" /> <span>歸零</span></label>
@@ -159,19 +159,16 @@ import Layout from '../layouts/Layout.astro';
 				</div>
 			</div>
 
-			<div class="flex gap-3 pt-2">
-				<button id="apply-btn" type="button" class="flex-1 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.99]">
-					開始
-				</button>
-				<button id="reset-btn" type="button" class="rounded-2xl border border-zinc-300 px-5 py-3 text-sm font-semibold transition hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800">
-					重設
+			<div class="flex gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800 mt-8">
+				<button id="reset-btn" type="button" class="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:hover:bg-zinc-700">
+					重設設定
 				</button>
 			</div>
 		</div>
 	</dialog>
 </Layout>
 
-<style>
+<style is:global>
 	.unit-chip,
 	.finish-mode-card {
 		display: flex;
@@ -214,31 +211,41 @@ import Layout from '../layouts/Layout.astro';
 
 	.preset-btn {
 		font-size: 0.75rem;
+		font-weight: 500;
+		transition: all 150ms ease;
 	}
 
-	.preset-btn:hover {
-		border-color: rgb(59 130 246);
+	.preset-btn:active {
+		scale: 0.97;
 	}
 
 	.preset-btn[data-active="true"] {
-		border-color: rgb(59 130 246);
-		background: rgb(59 130 246);
+		border-color: rgb(16 185 129);
+		background: rgb(16 185 129);
 		color: white;
+		box-shadow: 0 0 0 4px rgb(16 185 129 / 0.1);
 	}
 
 	.dark .preset-btn[data-active="true"] {
-		background: rgb(59 130 246);
+		border-color: rgb(16 185 129);
+		background: rgb(16 185 129);
 		color: white;
+		box-shadow: 0 0 0 4px rgb(16 185 129 / 0.15);
 	}
 
 	.display-settings-item {
 		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
-		border-radius: 0.75rem;
-		border: 1px solid rgb(212 212 216);
+		gap: 0.5rem;
+		border-radius: 0.875rem;
+		border: 1px solid rgb(229 231 235);
 		background: rgb(249 250 251);
-		padding: 0.75rem;
+		padding: 0.875rem;
+		transition: all 150ms ease;
+	}
+
+	.display-settings-item:hover {
+		border-color: rgb(209 213 219);
+		background: rgb(245 247 250);
 	}
 
 	.dark .display-settings-item {
@@ -246,41 +253,49 @@ import Layout from '../layouts/Layout.astro';
 		background: rgb(24 24 27);
 	}
 
+	.dark .display-settings-item:hover {
+		border-color: rgb(82 82 91);
+		background: rgb(39 39 42);
+	}
+
 	.display-settings-item label {
 		display: flex;
 		align-items: center;
-		gap: 0.4rem;
+		gap: 0.5rem;
 		font-size: 0.8125rem;
 		font-weight: 600;
 		cursor: pointer;
+		text-wrap: nowrap;
 	}
 
 	.display-settings-item input[type="checkbox"] {
-		accent-color: rgb(59 130 246);
+		accent-color: rgb(16 185 129);
 		cursor: pointer;
+		flex-shrink: 0;
 	}
 
 	.display-settings-item input[type="text"] {
 		width: 100%;
-		border-radius: 0.5rem;
-		border: 1px solid rgb(212 212 216);
+		border-radius: 0.625rem;
+		border: 1px solid rgb(209 213 219);
 		background: white;
-		padding: 0.35rem 0.5rem;
+		padding: 0.4rem 0.6rem;
 		font-size: 0.75rem;
-		font-family: monospace;
+		font-family: ui-monospace, 'Courier New', monospace;
 		outline: none;
-		transition: 150ms ease;
+		transition: all 150ms ease;
+		width: 100%;
 	}
 
 	.dark .display-settings-item input[type="text"] {
-		border-color: rgb(63 63 70);
+		border-color: rgb(82 82 91);
 		background: rgb(39 39 42);
 		color: rgb(228 228 231);
 	}
 
 	.display-settings-item input[type="text"]:focus {
-		border-color: rgb(59 130 246);
-		box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+		border-color: rgb(16 185 129);
+		box-shadow: 0 0 0 3px rgb(16 185 129 / 0.1);
 	}
 
 	@keyframes blink-timer {
@@ -299,22 +314,30 @@ import Layout from '../layouts/Layout.astro';
 
 	#config-dialog {
 		width: 90vw;
-		max-width: 28rem;
+		max-width: 56rem;
 	}
 
 	#config-dialog[open] {
-		animation: dialog-in 0.2s ease-out;
+		animation: dialog-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
 	@keyframes dialog-in {
 		from {
 			opacity: 0;
-			transform: scale(0.95) translateY(-10px);
+			transform: scale(0.98) translateY(-4px);
 		}
 		to {
 			opacity: 1;
 			transform: scale(1) translateY(0);
 		}
+	}
+
+	#close-config-btn:hover {
+		scale: 1.05;
+	}
+
+	#close-config-btn:active {
+		scale: 0.98;
 	}
 </style>
 
@@ -802,47 +825,12 @@ import Layout from '../layouts/Layout.astro';
 		els.stopBehaviorWrap.classList.toggle('hidden', config.finishMode !== 'stop');
 	}
 
-	function collectConfigFromForm() {
-		const selectedUnits = els.unitChecks
-			.filter((checkbox) => checkbox.checked)
-			.map((checkbox) => checkbox.value as UnitKey);
-
-		config.displayUnits = selectedUnits.length > 0 ? selectedUnits : ['second'];
-
-		const finishMode = els.finishModeRadios.find((radio) => radio.checked)?.value as FinishMode | undefined;
-		const stopBehavior = els.stopBehaviorRadios.find((radio) => radio.checked)?.value as StopBehavior | undefined;
-		config.finishMode = finishMode ?? 'countup';
-		config.stopBehavior = stopBehavior ?? 'freeze';
-
-		if (config.inputMethod === 'point') {
-			const value = els.pointInput.value;
-			config.targetIso = value ? new Date(value).toISOString() : null;
-		} else {
-			for (const [key, input] of Object.entries(els.durationInputs) as [UnitKey, HTMLInputElement][]) {
-				config.duration[key] = Math.max(0, Number.parseInt(input.value || '0', 10) || 0);
-			}
-			const now = new Date();
-			config.targetIso = addCalendarDuration(now, config.duration).toISOString();
-		}
-	}
-
 	function resetAll() {
 		config = structuredClone(defaultConfig);
 		frozenDisplay = null;
 		resetReferenceIso = null;
 		syncForm();
 		saveConfig();
-		render();
-	}
-
-	function apply() {
-		collectConfigFromForm();
-		if (!config.targetIso) return;
-		config.started = true;
-		frozenDisplay = null;
-		resetReferenceIso = config.targetIso;
-		saveConfig();
-		els.configDialog.close();
 		render();
 	}
 
@@ -922,15 +910,14 @@ import Layout from '../layouts/Layout.astro';
 				return;
 			}
 
-			if (config.stopBehavior === 'reset') {
-				const ref = resetReferenceIso ? new Date(resetReferenceIso) : target;
-				const nowForReset = new Date();
-				const nextTarget = addCalendarDuration(nowForReset, config.duration);
-				config.targetIso = nextTarget.toISOString();
-				saveConfig();
-				els.doneBehaviorHint.textContent = '已達時間點 · 已重置';
-				return;
-			}
+		if (config.stopBehavior === 'reset') {
+			const nowForReset = new Date();
+			const nextTarget = addCalendarDuration(nowForReset, config.duration);
+			config.targetIso = nextTarget.toISOString();
+			saveConfig();
+			els.doneBehaviorHint.textContent = '已達時間點 · 已重置';
+			return;
+		}
 		}
 
 		const breakdown = diffCalendar(target, now);
@@ -974,11 +961,15 @@ import Layout from '../layouts/Layout.astro';
 		});
 	});
 
-	els.applyBtn.addEventListener('click', apply);
 	els.resetBtn.addEventListener('click', resetAll);
 
 	els.editConfigBtn.addEventListener('click', () => {
 		els.configDialog.showModal();
+	});
+
+	const closeConfigBtn = document.getElementById('close-config-btn') as HTMLButtonElement;
+	closeConfigBtn.addEventListener('click', () => {
+		els.configDialog.close();
 	});
 
 	els.configDialog.addEventListener('click', (e) => {
@@ -993,6 +984,40 @@ import Layout from '../layouts/Layout.astro';
 			if (preset) applyPreset(preset);
 		});
 	});
+
+	// 為時間點輸入框添加實時事件監聽
+	els.pointInput.addEventListener('change', () => {
+		const value = els.pointInput.value;
+		config.targetIso = value ? new Date(value).toISOString() : null;
+		if (!config.started && config.targetIso) {
+			config.started = true;
+			resetReferenceIso = config.targetIso;
+		}
+		saveConfig();
+		render();
+	});
+
+	// 為倒數輸入框添加實時事件監聽
+	const durationKeys: UnitKey[] = ['year', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond'];
+	for (const key of durationKeys) {
+		const input = els.durationInputs[key as keyof typeof els.durationInputs];
+		if (input) {
+			input.addEventListener('change', () => {
+				for (const k of durationKeys) {
+					const i = els.durationInputs[k as keyof typeof els.durationInputs];
+					if (i) config.duration[k] = Math.max(0, Number.parseInt(i.value || '0', 10) || 0);
+				}
+				const now = new Date();
+				config.targetIso = addCalendarDuration(now, config.duration).toISOString();
+				if (!config.started) {
+					config.started = true;
+					resetReferenceIso = config.targetIso;
+				}
+				saveConfig();
+				render();
+			});
+		}
+	}
 
 	syncForm();
 	render();
