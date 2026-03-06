@@ -60,7 +60,7 @@ import Layout from '../layouts/Layout.astro';
 			<div id="panel-duration" class="hidden space-y-4">
 				<div>
 					<label class="mb-3 block text-sm font-semibold text-zinc-900 dark:text-zinc-50">倒數長度</label>
-					<div class="grid grid-cols-8 gap-2">
+					<div class="grid grid-cols-4 md:grid-cols-8 gap-2">
 						<div>
 							<input id="dur-year" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-emerald-400" />
 							<div class="mt-1 text-center text-xs font-medium text-zinc-600 dark:text-zinc-400">年</div>
@@ -106,7 +106,7 @@ import Layout from '../layouts/Layout.astro';
 				
 				<div class="mb-6 pb-6 border-b border-zinc-200 dark:border-zinc-800">
 					<label class="mb-3 block text-xs font-semibold tracking-wide uppercase text-zinc-600 dark:text-zinc-400">快速預設</label>
-					<div id="preset-buttons" class="grid grid-cols-6 gap-2">
+					<div id="preset-buttons" class="grid grid-cols-3 md:grid-cols-6 gap-2">
 						<button id="preset-btn-1" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-xs font-medium transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:border-emerald-500 dark:hover:bg-zinc-700" data-preset="preset1">
 							完整格式
 						</button>
@@ -233,7 +233,7 @@ import Layout from '../layouts/Layout.astro';
 
 	.display-settings-item {
 		display: grid;
-		grid-template-columns: auto min-content;
+		grid-template-columns: auto auto;
 		gap: 0.55rem;
 		border-radius: 0.875rem;
 		border: 1px solid rgb(229 231 235);
@@ -276,6 +276,7 @@ import Layout from '../layouts/Layout.astro';
 
 	.display-settings-item input[type="text"] {
 		grid-column: 1/3;
+		min-width: 0px;
 		box-sizing: border-box;
 		border-radius: 0.625rem;
 		border: 1px solid rgb(209 213 219);
