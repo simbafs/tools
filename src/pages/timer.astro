@@ -102,19 +102,41 @@ import Layout from '../layouts/Layout.astro';
 			</div>
 
 			<div>
-				<label class="mb-2 block text-sm font-semibold">顯示單位</label>
-				<div class="grid grid-cols-3 gap-2 sm:grid-cols-5">
-					<label class="unit-chip"><input type="checkbox" value="year" checked /> <span>年</span></label>
-					<label class="unit-chip"><input type="checkbox" value="month" checked /> <span>月</span></label>
-					<label class="unit-chip"><input type="checkbox" value="week" checked /> <span>週</span></label>
-					<label class="unit-chip"><input type="checkbox" value="day" checked /> <span>日</span></label>
-					<label class="unit-chip"><input type="checkbox" value="hour" checked /> <span>時</span></label>
-					<label class="unit-chip"><input type="checkbox" value="minute" checked /> <span>分</span></label>
-					<label class="unit-chip"><input type="checkbox" value="second" checked /> <span>秒</span></label>
-					<label class="unit-chip"><input type="checkbox" value="millisecond" /> <span>毫秒</span></label>
+				<label class="mb-3 block text-sm font-semibold">顯示格式設定</label>
+				
+				<div class="mb-4">
+					<label class="mb-2 block text-xs font-semibold tracking-wide text-zinc-600 dark:text-zinc-400">快速預設</label>
+					<div id="preset-buttons" class="grid grid-cols-3 gap-2">
+						<button id="preset-btn-1" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset1">
+							完整格式
+						</button>
+						<button id="preset-btn-2" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset2">
+							斜線格式
+						</button>
+						<button id="preset-btn-3" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset3">
+							簡短格式
+						</button>
+						<button id="preset-btn-4" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset4">
+							時分秒
+						</button>
+						<button id="preset-btn-5" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset5">
+							僅日期
+						</button>
+						<button id="preset-btn-6" type="button" class="preset-btn rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700" data-preset="preset6">
+							僅毫秒
+						</button>
+					</div>
 				</div>
-				<p class="mt-2 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
-					可任意組合，例如年日、年月週日、年週日、時分秒毫秒。
+
+				<div>
+					<label class="mb-2 block text-xs font-semibold tracking-wide text-zinc-600 dark:text-zinc-400">自訂單位範本</label>
+					<div id="display-settings-grid" class="grid grid-cols-2 gap-3">
+						<!-- 動態生成的設定項 -->
+					</div>
+				</div>
+				
+				<p class="mt-3 text-xs leading-6 text-zinc-500 dark:text-zinc-400">
+					支援的 Token：%Y(年)、%M(月)、%W(週)、%D(日)、%h(時,2位)、%m(分,2位)、%s(秒,2位)、%ms(毫秒,3位)
 				</p>
 			</div>
 
@@ -190,6 +212,77 @@ import Layout from '../layouts/Layout.astro';
 		accent-color: rgb(59 130 246);
 	}
 
+	.preset-btn {
+		font-size: 0.75rem;
+	}
+
+	.preset-btn:hover {
+		border-color: rgb(59 130 246);
+	}
+
+	.preset-btn[data-active="true"] {
+		border-color: rgb(59 130 246);
+		background: rgb(59 130 246);
+		color: white;
+	}
+
+	.dark .preset-btn[data-active="true"] {
+		background: rgb(59 130 246);
+		color: white;
+	}
+
+	.display-settings-item {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		border-radius: 0.75rem;
+		border: 1px solid rgb(212 212 216);
+		background: rgb(249 250 251);
+		padding: 0.75rem;
+	}
+
+	.dark .display-settings-item {
+		border-color: rgb(63 63 70);
+		background: rgb(24 24 27);
+	}
+
+	.display-settings-item label {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.display-settings-item input[type="checkbox"] {
+		accent-color: rgb(59 130 246);
+		cursor: pointer;
+	}
+
+	.display-settings-item input[type="text"] {
+		width: 100%;
+		border-radius: 0.5rem;
+		border: 1px solid rgb(212 212 216);
+		background: white;
+		padding: 0.35rem 0.5rem;
+		font-size: 0.75rem;
+		font-family: monospace;
+		outline: none;
+		transition: 150ms ease;
+	}
+
+	.dark .display-settings-item input[type="text"] {
+		border-color: rgb(63 63 70);
+		background: rgb(39 39 42);
+		color: rgb(228 228 231);
+	}
+
+	.display-settings-item input[type="text"]:focus {
+		border-color: rgb(59 130 246);
+		box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+	}
+
 	@keyframes blink-timer {
 		0%, 100% { opacity: 1; }
 		50% { opacity: 0.18; }
@@ -233,11 +326,18 @@ import Layout from '../layouts/Layout.astro';
 	type StopBehavior = 'freeze' | 'zero' | 'reset';
 	type UnitKey = 'year' | 'month' | 'week' | 'day' | 'hour' | 'minute' | 'second' | 'millisecond';
 
+	interface DisplayUnitSetting {
+		key: UnitKey;
+		template: string;
+		enabled: boolean;
+	}
+
 	interface TimerConfig {
 		inputMethod: InputMethod;
 		targetIso: string | null;
 		duration: Record<UnitKey, number>;
 		displayUnits: UnitKey[];
+		displaySettings: DisplayUnitSetting[];
 		finishMode: FinishMode;
 		stopBehavior: StopBehavior;
 		started: boolean;
@@ -274,6 +374,80 @@ import Layout from '../layouts/Layout.astro';
 		second: 1000,
 	};
 
+	const defaultDisplaySettings: DisplayUnitSetting[] = [
+		{ key: 'year', template: '%Y 年', enabled: true },
+		{ key: 'month', template: '%M 月', enabled: true },
+		{ key: 'week', template: '%W 週', enabled: true },
+		{ key: 'day', template: '%D 日', enabled: true },
+		{ key: 'hour', template: '%h 時', enabled: true },
+		{ key: 'minute', template: '%m 分', enabled: true },
+		{ key: 'second', template: '%s 秒', enabled: true },
+		{ key: 'millisecond', template: '%ms 毫秒', enabled: false },
+	];
+
+	const PRESETS: Record<string, DisplayUnitSetting[]> = {
+		preset1: [
+			{ key: 'year', template: '%Y 年', enabled: true },
+			{ key: 'month', template: '%M 月', enabled: true },
+			{ key: 'week', template: '%W 週', enabled: true },
+			{ key: 'day', template: '%D 日', enabled: true },
+			{ key: 'hour', template: '%h 時', enabled: true },
+			{ key: 'minute', template: '%m 分', enabled: true },
+			{ key: 'second', template: '%s 秒', enabled: true },
+			{ key: 'millisecond', template: '%ms 毫秒', enabled: true },
+		],
+		preset2: [
+			{ key: 'year', template: '%Y', enabled: true },
+			{ key: 'month', template: '%M', enabled: true },
+			{ key: 'week', template: '%W', enabled: false },
+			{ key: 'day', template: '%D', enabled: true },
+			{ key: 'hour', template: '%h', enabled: true },
+			{ key: 'minute', template: '%m', enabled: true },
+			{ key: 'second', template: '%s', enabled: true },
+			{ key: 'millisecond', template: '%ms', enabled: false },
+		],
+		preset3: [
+			{ key: 'year', template: '%Y 年', enabled: false },
+			{ key: 'month', template: '%M 月', enabled: false },
+			{ key: 'week', template: '%W 週', enabled: false },
+			{ key: 'day', template: '%D 日', enabled: true },
+			{ key: 'hour', template: '%h 時', enabled: true },
+			{ key: 'minute', template: '%m 分', enabled: true },
+			{ key: 'second', template: '%s 秒', enabled: true },
+			{ key: 'millisecond', template: '%ms 毫秒', enabled: false },
+		],
+		preset4: [
+			{ key: 'year', template: '%Y 年', enabled: false },
+			{ key: 'month', template: '%M 月', enabled: false },
+			{ key: 'week', template: '%W 週', enabled: false },
+			{ key: 'day', template: '%D 日', enabled: false },
+			{ key: 'hour', template: '%h 時', enabled: true },
+			{ key: 'minute', template: '%m 分', enabled: true },
+			{ key: 'second', template: '%s 秒', enabled: true },
+			{ key: 'millisecond', template: '%ms 毫秒', enabled: false },
+		],
+		preset5: [
+			{ key: 'year', template: '%Y 年', enabled: true },
+			{ key: 'month', template: '%M 月', enabled: true },
+			{ key: 'week', template: '%W 週', enabled: false },
+			{ key: 'day', template: '%D 日', enabled: true },
+			{ key: 'hour', template: '%h 時', enabled: false },
+			{ key: 'minute', template: '%m 分', enabled: false },
+			{ key: 'second', template: '%s 秒', enabled: false },
+			{ key: 'millisecond', template: '%ms 毫秒', enabled: false },
+		],
+		preset6: [
+			{ key: 'year', template: '%Y 年', enabled: false },
+			{ key: 'month', template: '%M 月', enabled: false },
+			{ key: 'week', template: '%W 週', enabled: false },
+			{ key: 'day', template: '%D 日', enabled: false },
+			{ key: 'hour', template: '%h 時', enabled: false },
+			{ key: 'minute', template: '%m 分', enabled: false },
+			{ key: 'second', template: '%s 秒', enabled: false },
+			{ key: 'millisecond', template: '%ms 毫秒', enabled: true },
+		],
+	};
+
 	const defaultFuture = new Date();
 	defaultFuture.setHours(defaultFuture.getHours() + 1, 0, 0, 0);
 
@@ -291,6 +465,7 @@ import Layout from '../layouts/Layout.astro';
 			millisecond: 0,
 		},
 		displayUnits: ['year', 'month', 'week', 'day', 'hour', 'minute', 'second'],
+		displaySettings: structuredClone(defaultDisplaySettings),
 		finishMode: 'countup',
 		stopBehavior: 'freeze',
 		started: false,
@@ -324,6 +499,8 @@ import Layout from '../layouts/Layout.astro';
 		unitChecks: Array.from(document.querySelectorAll('.unit-chip input[type="checkbox"]')) as HTMLInputElement[],
 		finishModeRadios: Array.from(document.querySelectorAll('input[name="finish-mode"]')) as HTMLInputElement[],
 		stopBehaviorRadios: Array.from(document.querySelectorAll('input[name="stop-behavior"]')) as HTMLInputElement[],
+		presetButtons: Array.from(document.querySelectorAll('.preset-btn')) as HTMLButtonElement[],
+		displaySettingsGrid: document.getElementById('display-settings-grid') as HTMLDivElement,
 	};
 
 	let config = loadConfig();
@@ -342,6 +519,9 @@ import Layout from '../layouts/Layout.astro';
 			displayUnits: Array.isArray(data.displayUnits) && data.displayUnits.length > 0
 				? data.displayUnits.filter((u): u is UnitKey => ORDER.includes(u as UnitKey))
 				: structuredClone(defaultConfig).displayUnits,
+			displaySettings: Array.isArray(data.displaySettings) && data.displaySettings.length > 0
+				? data.displaySettings.filter((s): s is DisplayUnitSetting => ORDER.includes(s.key))
+				: structuredClone(defaultConfig).displaySettings,
 		};
 	}
 
@@ -477,35 +657,58 @@ import Layout from '../layouts/Layout.astro';
 		return map;
 	}
 
-	function buildDisplay(diff: DurationBreakdown, selectedUnits: UnitKey[]) {
-		const normalizedSelection = ORDER.filter((key) => selectedUnits.includes(key));
-		const rebalance = rebalanceForSelection(diff, normalizedSelection);
+	function buildDisplay(diff: DurationBreakdown, settings: DisplayUnitSetting[]) {
+		const enabledSettings = settings.filter((s) => s.enabled);
+		if (enabledSettings.length === 0) return '0';
 
-		const dateUnits = normalizedSelection.filter((k) => ['year', 'month', 'week', 'day'].includes(k));
-		const hmsUnits = normalizedSelection.filter((k) => ['hour', 'minute', 'second'].includes(k));
-		const msUnits = normalizedSelection.filter((k) => ['millisecond'].includes(k));
+		// 只用「有勾選」的單位來重算
+		const selectedKeys = enabledSettings.map((s) => s.key);
+		const rebalance = rebalanceForSelection(diff, selectedKeys);
 
-		const padTime = (key: UnitKey, value: number) => {
-			if (key === 'millisecond') return String(value).padStart(3, '0');
-			if (key === 'hour' || key === 'minute' || key === 'second') return String(value).padStart(2, '0');
-			return String(value);
-		};
+		const lines: string[][] = [];
+		let currentLine: string[] = [];
 
-		const buildLine = (units: UnitKey[]) => {
-			const parts = units
-				.map((key) => ({ key, value: rebalance[key] }))
-				.filter(({ value }, index) => value !== 0 || index === units.length - 1);
-			if (parts.length === 0) return '';
-			return parts.map(({ key, value }) => `${padTime(key, value)} ${UNIT_LABELS[key]}`).join(' ');
-		};
+		for (const setting of enabledSettings) {
+			const value = rebalance[setting.key];
+			const template = setting.template;
 
-		const dateLine = buildLine(dateUnits);
-		const hmsLine = buildLine(hmsUnits);
-		const msLine = buildLine(msUnits);
+			let result = template;
 
-		const lines = [dateLine, hmsLine, msLine].filter(l => l);
-		if (lines.length === 0) return '0 秒';
-		return lines.join('<br/>');
+			if (setting.key === 'millisecond') {
+				result = result.replace('%ms', String(value).padStart(3, '0'));
+			} else if (setting.key === 'hour') {
+				result = result.replace('%h', String(value).padStart(2, '0'));
+			} else if (setting.key === 'minute') {
+				result = result.replace('%m', String(value).padStart(2, '0'));
+			} else if (setting.key === 'second') {
+				result = result.replace('%s', String(value).padStart(2, '0'));
+			} else if (setting.key === 'year') {
+				result = result.replace('%Y', String(value));
+			} else if (setting.key === 'month') {
+				result = result.replace('%M', String(value));
+			} else if (setting.key === 'week') {
+				result = result.replace('%W', String(value));
+			} else if (setting.key === 'day') {
+				result = result.replace('%D', String(value));
+			}
+
+			if (template.includes(';')) {
+				if (currentLine.length > 0) {
+					lines.push(currentLine);
+					currentLine = [];
+				}
+				currentLine.push(result.replace(/;/g, ''));
+			} else {
+				currentLine.push(result);
+			}
+		}
+
+		if (currentLine.length > 0) {
+			lines.push(currentLine);
+		}
+
+		const output = lines.map((line) => line.join(' ')).join('<br/>');
+		return output.length > 0 ? output : '0';
 	}
 
 	function setMethod(method: InputMethod) {
@@ -515,6 +718,52 @@ import Layout from '../layouts/Layout.astro';
 		});
 		els.panelPoint.classList.toggle('hidden', method !== 'point');
 		els.panelDuration.classList.toggle('hidden', method !== 'duration');
+	}
+
+	function renderDisplaySettingsUI() {
+		els.displaySettingsGrid.innerHTML = '';
+		for (const setting of config.displaySettings) {
+			const item = document.createElement('div');
+			item.className = 'display-settings-item';
+
+			const checkboxLabel = document.createElement('label');
+			const checkbox = document.createElement('input');
+			checkbox.type = 'checkbox';
+			checkbox.checked = setting.enabled;
+			checkbox.dataset.unitKey = setting.key;
+			checkboxLabel.appendChild(checkbox);
+			checkboxLabel.appendChild(document.createTextNode(UNIT_LABELS[setting.key]));
+
+			const templateInput = document.createElement('input');
+			templateInput.type = 'text';
+			templateInput.value = setting.template;
+			templateInput.placeholder = `如 %${setting.key.charAt(0).toUpperCase()} 日`;
+			templateInput.dataset.unitKey = setting.key;
+
+			item.appendChild(checkboxLabel);
+			item.appendChild(templateInput);
+
+			els.displaySettingsGrid.appendChild(item);
+
+			// Event listeners
+			checkbox.addEventListener('change', () => {
+				const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
+				if (idx !== -1) {
+					config.displaySettings[idx].enabled = checkbox.checked;
+					saveConfig();
+					render();
+				}
+			});
+
+			templateInput.addEventListener('input', () => {
+				const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
+				if (idx !== -1) {
+					config.displaySettings[idx].template = templateInput.value;
+					saveConfig();
+					render();
+				}
+			});
+		}
 	}
 
 	function syncForm() {
@@ -545,6 +794,7 @@ import Layout from '../layouts/Layout.astro';
 			radio.checked = radio.value === config.stopBehavior;
 		});
 
+		renderDisplaySettingsUI();
 		updateFinishBehaviorUI();
 	}
 
@@ -596,6 +846,23 @@ import Layout from '../layouts/Layout.astro';
 		render();
 	}
 
+	function applyPreset(presetKey: string) {
+		const preset = PRESETS[presetKey];
+		if (preset) {
+			config.displaySettings = structuredClone(preset);
+			saveConfig();
+			syncForm();
+			render();
+			updatePresetButtonUI();
+		}
+	}
+
+	function updatePresetButtonUI() {
+		els.presetButtons.forEach((btn) => {
+			btn.dataset.active = 'false';
+		});
+	}
+
 	function formatMeta(target: Date, isFuture: boolean) {
 		const modeText = isFuture ? '倒數中' : '正數中';
 		return `${modeText} · 目標時間 ${target.toLocaleString('zh-TW')}`;
@@ -628,7 +895,7 @@ import Layout from '../layouts/Layout.astro';
 
 		if (isCountdown) {
 			const breakdown = diffCalendar(now, target);
-			els.displayValue.innerHTML = buildDisplay(breakdown, config.displayUnits);
+			els.displayValue.innerHTML = buildDisplay(breakdown, config.displaySettings);
 			els.displayMeta.textContent = formatMeta(target, true);
 			return;
 		}
@@ -641,16 +908,16 @@ import Layout from '../layouts/Layout.astro';
 				if (!frozenDisplay) {
 					const exactTarget = new Date(target.getTime());
 					const breakdown = diffCalendar(exactTarget, exactTarget);
-					frozenDisplay = buildDisplay(breakdown, config.displayUnits);
+					frozenDisplay = buildDisplay(breakdown, config.displaySettings);
 				}
-				els.displayValue.textContent = frozenDisplay;
+				els.displayValue.innerHTML = frozenDisplay;
 				els.displayValue.classList.add('blinking');
 				els.doneBehaviorHint.textContent = '已達時間點 · 閃爍';
 				return;
 			}
 
 			if (config.stopBehavior === 'zero') {
-				els.displayValue.textContent = buildDisplay({ year: 0, month: 0, week: 0, day: 0, hour: 0, minute: 0, second: 0, millisecond: 0 }, config.displayUnits);
+				els.displayValue.innerHTML = buildDisplay({ year: 0, month: 0, week: 0, day: 0, hour: 0, minute: 0, second: 0, millisecond: 0 }, config.displaySettings);
 				els.doneBehaviorHint.textContent = '已達時間點 · 歸零';
 				return;
 			}
@@ -667,7 +934,7 @@ import Layout from '../layouts/Layout.astro';
 		}
 
 		const breakdown = diffCalendar(target, now);
-		const lines = buildDisplay(breakdown, config.displayUnits).split('<br/>');
+		const lines = buildDisplay(breakdown, config.displaySettings).split('<br/>');
 		if (lines.length >= 2) {
 			lines[1] = '+' + lines[1];
 		} else {
@@ -685,7 +952,9 @@ import Layout from '../layouts/Layout.astro';
 
 	els.methodButtons.forEach((btn) => {
 		btn.addEventListener('click', () => {
-			setMethod(btn.dataset.method as InputMethod);
+			const method = btn.dataset.method as InputMethod;
+			config.inputMethod = method;
+			setMethod(method);
 			saveConfig();
 		});
 	});
@@ -716,6 +985,13 @@ import Layout from '../layouts/Layout.astro';
 		if (e.target === els.configDialog) {
 			els.configDialog.close();
 		}
+	});
+
+	els.presetButtons.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const preset = btn.dataset.preset;
+			if (preset) applyPreset(preset);
+		});
 	});
 
 	syncForm();
