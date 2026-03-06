@@ -1,10 +1,10 @@
 // src/lib/url-store.ts
 
 // The query parameter name where all data is stored.
-const QUERY_PARAM = 'q';
+const QUERY_PARAM = 'q'
 
 // Custom event name for state updates not triggered by popstate
-const EVENT_NAME = 'url-store-update';
+const EVENT_NAME = 'url-store-update'
 
 /**
  * Encodes data to a URL-safe Base64 string.
@@ -12,10 +12,10 @@ const EVENT_NAME = 'url-store-update';
  */
 function encode<T>(data: T): string {
 	try {
-		return btoa(encodeURIComponent(JSON.stringify(data)));
+		return btoa(encodeURIComponent(JSON.stringify(data)))
 	} catch (e) {
-		console.error('Failed to encode data for URL:', e);
-		return '';
+		console.error('Failed to encode data for URL:', e)
+		return ''
 	}
 }
 
@@ -25,10 +25,10 @@ function encode<T>(data: T): string {
  */
 function decode<T>(str: string): T | null {
 	try {
-		return JSON.parse(decodeURIComponent(atob(str)));
+		return JSON.parse(decodeURIComponent(atob(str)))
 	} catch (e) {
-		console.error('Failed to decode data from URL:', e);
-		return null;
+		console.error('Failed to decode data from URL:', e)
+		return null
 	}
 }
 
@@ -37,10 +37,10 @@ function decode<T>(str: string): T | null {
  * Supports listening to changes via .subscribe()
  */
 export class URLStore<T> {
-	private defaultValue: T;
+	private defaultValue: T
 
 	constructor(defaultValue: T) {
-		this.defaultValue = defaultValue;
+		this.defaultValue = defaultValue
 	}
 
 	/**
@@ -49,18 +49,18 @@ export class URLStore<T> {
 	 */
 	get(): T {
 		if (typeof window === 'undefined') {
-			return this.defaultValue;
+			return this.defaultValue
 		}
 
-		const params = new URLSearchParams(window.location.search);
-		const val = params.get(QUERY_PARAM);
+		const params = new URLSearchParams(window.location.search)
+		const val = params.get(QUERY_PARAM)
 
 		if (!val) {
-			return this.defaultValue;
+			return this.defaultValue
 		}
 
-		const decoded = decode<T>(val);
-		return decoded !== null ? decoded : this.defaultValue;
+		const decoded = decode<T>(val)
+		return decoded !== null ? decoded : this.defaultValue
 	}
 
 	/**
@@ -69,20 +69,39 @@ export class URLStore<T> {
 	 * @param pushHistory If true, creates a new history entry (pushState). If false, replaces the current entry (replaceState). Default: false.
 	 */
 	set(data: T, pushHistory = false): void {
-		if (typeof window === 'undefined') return;
+		if (typeof window === 'undefined') return
 
-		const encoded = encode(data);
-		const url = new URL(window.location.href);
-		url.searchParams.set(QUERY_PARAM, encoded);
+		const encoded = encode(data)
+		const url = new URL(window.location.href)
+		url.searchParams.set(QUERY_PARAM, encoded)
 
 		if (pushHistory) {
-			window.history.pushState({}, '', url.toString());
+			window.history.pushState({}, '', url.toString())
 		} else {
-			window.history.replaceState({}, '', url.toString());
+			window.history.replaceState({}, '', url.toString())
 		}
 
 		// Dispatch custom event for in-page updates
-		window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: data }));
+		window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: data }))
+	}
+
+	/**
+	 * Clears the state from the URL.
+	 * @param pushHistory If true, creates a new history entry (pushState). If false, replaces the current entry (replaceState). Default: false.
+	 */
+	clear(pushHistory = false): void {
+		if (typeof window === 'undefined') return
+
+		const url = new URL(window.location.href)
+		url.searchParams.delete(QUERY_PARAM)
+		if (pushHistory) {
+			window.history.pushState({}, '', url.toString())
+		} else {
+			window.history.replaceState({}, '', url.toString())
+		}
+
+		// Dispatch custom event for in-page updates
+		window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: this.defaultValue }))
 	}
 
 	/**
@@ -90,34 +109,34 @@ export class URLStore<T> {
 	 * The callback is invoked when:
 	 * 1. The URL is updated via .set() (custom event)
 	 * 2. The user navigates back/forward (popstate event)
-	 * 
+	 *
 	 * @returns A function to unsubscribe.
 	 */
 	subscribe(callback: (data: T) => void): () => void {
 		if (typeof window === 'undefined') {
-			return () => {};
+			return () => { }
 		}
 
 		const handleCustomEvent = (event: Event) => {
-			const customEvent = event as CustomEvent;
-			callback(customEvent.detail);
-		};
+			const customEvent = event as CustomEvent
+			callback(customEvent.detail)
+		}
 
 		const handlePopState = () => {
-			callback(this.get());
-		};
+			callback(this.get())
+		}
 
-		window.addEventListener(EVENT_NAME, handleCustomEvent);
-		window.addEventListener('popstate', handlePopState);
+		window.addEventListener(EVENT_NAME, handleCustomEvent)
+		window.addEventListener('popstate', handlePopState)
 
 		// Initialize with current state immediately?
 		// Usually subscribers want the current value right away.
-		// However, standard stores often don't trigger on subscribe. 
+		// However, standard stores often don't trigger on subscribe.
 		// Let's assume the consumer calls .get() for initial render.
-		
+
 		return () => {
-			window.removeEventListener(EVENT_NAME, handleCustomEvent);
-			window.removeEventListener('popstate', handlePopState);
-		};
+			window.removeEventListener(EVENT_NAME, handleCustomEvent)
+			window.removeEventListener('popstate', handlePopState)
+		}
 	}
 }

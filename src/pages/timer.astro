@@ -573,6 +573,10 @@ import Layout from '../layouts/Layout.astro';
 		store.set(config);
 	}
 
+	function clearConfig() {
+		store.clear();
+	}
+
 	function pad(n: number, size = 2) {
 		return String(n).padStart(size, '0');
 	}
@@ -876,7 +880,8 @@ import Layout from '../layouts/Layout.astro';
 		frozenDisplay = null;
 		resetReferenceIso = null;
 		syncForm();
-		saveConfig();
+		clearConfig();
+		// saveConfig();
 		render();
 	}
 
