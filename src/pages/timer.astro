@@ -769,27 +769,29 @@ import Layout from '../layouts/Layout.astro';
 			els.displaySettingsGrid.appendChild(item);
 
 			// Event listeners
-			checkbox.addEventListener('change', () => {
-				const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
-				if (idx !== -1) {
-					config.displaySettings[idx].enabled = checkbox.checked;
-					saveConfig();
-					render();
-				}
-			});
+		checkbox.addEventListener('change', () => {
+			const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
+			if (idx !== -1) {
+				config.displaySettings[idx].enabled = checkbox.checked;
+				isUpdatingFromForm = true;
+				saveConfig();
+				isUpdatingFromForm = false;
+			}
+		});
 
-			templateInput.addEventListener('input', () => {
-				const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
-				if (idx !== -1) {
-					config.displaySettings[idx].template = templateInput.value;
-					saveConfig();
-					render();
-				}
-			});
+		templateInput.addEventListener('input', () => {
+			const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
+			if (idx !== -1) {
+				config.displaySettings[idx].template = templateInput.value;
+				isUpdatingFromForm = true;
+				saveConfig();
+				isUpdatingFromForm = false;
+			}
+		});
 		}
 	}
 
-	function syncForm() {
+	function syncForm(shouldRenderDisplaySettings = true) {
 		setMethod(config.inputMethod);
 
 		if (config.targetIso) {
@@ -817,7 +819,9 @@ import Layout from '../layouts/Layout.astro';
 			radio.checked = radio.value === config.stopBehavior;
 		});
 
-		renderDisplaySettingsUI();
+		if (shouldRenderDisplaySettings) {
+			renderDisplaySettingsUI();
+		}
 		updateFinishBehaviorUI();
 	}
 
@@ -931,9 +935,16 @@ import Layout from '../layouts/Layout.astro';
 		els.displayMeta.textContent = formatMeta(target, false);
 	}
 
+	let isUpdatingFromForm = false;
+
 	store.subscribe((newConfig) => {
-		config = newConfig;
-		syncForm();
+		// If update came from form input, don't re-render the form
+		if (!isUpdatingFromForm) {
+			config = newConfig;
+			syncForm(true);
+		} else {
+			config = newConfig;
+		}
 		render();
 	});
 
