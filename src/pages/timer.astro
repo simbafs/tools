@@ -4,7 +4,7 @@ import Layout from '../layouts/Layout.astro';
 
 <Layout title="Flexible Timer">
 	<div class="fixed inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-		<div id="display-value" class="w-full px-4 text-center font-bold leading-tight tracking-tight text-zinc-900 dark:text-zinc-50">
+		<div id="display-value" class="w-full px-4 text-center font-bold leading-tight tracking-tight text-zinc-900 dark:text-zinc-50 text-balance">
 			請先完成設定
 		</div>
 	</div>
@@ -130,9 +130,7 @@ import Layout from '../layouts/Layout.astro';
 
 				<div>
 					<label class="mb-4 block text-xs font-semibold tracking-wide uppercase text-zinc-600 dark:text-zinc-400">自訂單位範本</label>
-					<div id="display-settings-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3">
-						<!-- 動態生成的設定項 -->
-					</div>
+					<div id="display-settings-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
 				</div>
 				
 				<p class="text-xs leading-6 text-zinc-500 dark:text-zinc-400">
@@ -234,13 +232,15 @@ import Layout from '../layouts/Layout.astro';
 	}
 
 	.display-settings-item {
-		display: flex;
-		gap: 0.5rem;
+		display: grid;
+		grid-template-columns: auto min-content;
+		gap: 0.55rem;
 		border-radius: 0.875rem;
 		border: 1px solid rgb(229 231 235);
 		background: rgb(249 250 251);
 		padding: 0.875rem;
 		transition: all 150ms ease;
+		min-width: 0;
 	}
 
 	.display-settings-item:hover {
@@ -258,7 +258,7 @@ import Layout from '../layouts/Layout.astro';
 		background: rgb(39 39 42);
 	}
 
-	.display-settings-item label {
+	.display-settings-item > label:first-child {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
@@ -275,7 +275,8 @@ import Layout from '../layouts/Layout.astro';
 	}
 
 	.display-settings-item input[type="text"] {
-		width: 100%;
+		grid-column: 1/3;
+		box-sizing: border-box;
 		border-radius: 0.625rem;
 		border: 1px solid rgb(209 213 219);
 		background: white;
@@ -284,7 +285,6 @@ import Layout from '../layouts/Layout.astro';
 		font-family: ui-monospace, 'Courier New', monospace;
 		outline: none;
 		transition: all 150ms ease;
-		width: 100%;
 	}
 
 	.dark .display-settings-item input[type="text"] {
@@ -298,6 +298,20 @@ import Layout from '../layouts/Layout.astro';
 		box-shadow: 0 0 0 3px rgb(16 185 129 / 0.1);
 	}
 
+	.display-settings-break {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.75rem;
+		color: rgb(82 82 91);
+		cursor: pointer;
+		user-select: none;
+	}
+
+	.dark .display-settings-break {
+		color: rgb(161 161 170);
+	}
+
 	@keyframes blink-timer {
 		0%, 100% { opacity: 1; }
 		50% { opacity: 0.18; }
@@ -308,7 +322,7 @@ import Layout from '../layouts/Layout.astro';
 	}
 
 	#display-value {
-		font-size: 13vw;
+		font-size: 12vw;
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -353,6 +367,7 @@ import Layout from '../layouts/Layout.astro';
 		key: UnitKey;
 		template: string;
 		enabled: boolean;
+		breakAfter: boolean;
 	}
 
 	interface TimerConfig {
@@ -398,76 +413,76 @@ import Layout from '../layouts/Layout.astro';
 	};
 
 	const defaultDisplaySettings: DisplayUnitSetting[] = [
-		{ key: 'year', template: '%Y 年', enabled: true },
-		{ key: 'month', template: '%M 月', enabled: true },
-		{ key: 'week', template: '%W 週', enabled: true },
-		{ key: 'day', template: '%D 日', enabled: true },
-		{ key: 'hour', template: '%h 時', enabled: true },
-		{ key: 'minute', template: '%m 分', enabled: true },
-		{ key: 'second', template: '%s 秒', enabled: true },
-		{ key: 'millisecond', template: '%ms 毫秒', enabled: false },
+		{ key: 'year', template: '%Y 年', enabled: true, breakAfter: false },
+		{ key: 'month', template: '%M 月', enabled: true, breakAfter: false },
+		{ key: 'week', template: '%W 週', enabled: true, breakAfter: false },
+		{ key: 'day', template: '%D 日', enabled: true, breakAfter: true },
+		{ key: 'hour', template: '%h 時', enabled: true, breakAfter: false },
+		{ key: 'minute', template: '%m 分', enabled: true, breakAfter: false },
+		{ key: 'second', template: '%s 秒', enabled: true, breakAfter: true },
+		{ key: 'millisecond', template: '%ms 毫秒', enabled: false, breakAfter: false },
 	];
 
 	const PRESETS: Record<string, DisplayUnitSetting[]> = {
 		preset1: [
-			{ key: 'year', template: '%Y 年', enabled: true },
-			{ key: 'month', template: '%M 月', enabled: true },
-			{ key: 'week', template: '%W 週', enabled: true },
-			{ key: 'day', template: '%D 日', enabled: true },
-			{ key: 'hour', template: '%h 時', enabled: true },
-			{ key: 'minute', template: '%m 分', enabled: true },
-			{ key: 'second', template: '%s 秒', enabled: true },
-			{ key: 'millisecond', template: '%ms 毫秒', enabled: true },
+			{ key: 'year', template: '%Y 年', enabled: true, breakAfter: false },
+			{ key: 'month', template: '%M 月', enabled: true, breakAfter: false },
+			{ key: 'week', template: '%W 週', enabled: true, breakAfter: false },
+			{ key: 'day', template: '%D 日', enabled: true, breakAfter: true },
+			{ key: 'hour', template: '%h 時', enabled: true, breakAfter: false },
+			{ key: 'minute', template: '%m 分', enabled: true, breakAfter: false },
+			{ key: 'second', template: '%s 秒', enabled: true, breakAfter: true },
+			{ key: 'millisecond', template: '%ms 毫秒', enabled: true, breakAfter: false },
 		],
 		preset2: [
-			{ key: 'year', template: '%Y', enabled: true },
-			{ key: 'month', template: '%M', enabled: true },
-			{ key: 'week', template: '%W', enabled: false },
-			{ key: 'day', template: '%D', enabled: true },
-			{ key: 'hour', template: '%h', enabled: true },
-			{ key: 'minute', template: '%m', enabled: true },
-			{ key: 'second', template: '%s', enabled: true },
-			{ key: 'millisecond', template: '%ms', enabled: false },
+			{ key: 'year', template: '%Y/', enabled: true, breakAfter: false },
+			{ key: 'month', template: '%M/', enabled: true, breakAfter: false },
+			{ key: 'week', template: '%W', enabled: false, breakAfter: false },
+			{ key: 'day', template: '%D', enabled: true, breakAfter: true },
+			{ key: 'hour', template: '%h:', enabled: true, breakAfter: false },
+			{ key: 'minute', template: '%m:', enabled: true, breakAfter: false },
+			{ key: 'second', template: '%s', enabled: true, breakAfter: false },
+			{ key: 'millisecond', template: '.%ms', enabled: false, breakAfter: false },
 		],
 		preset3: [
-			{ key: 'year', template: '%Y 年', enabled: false },
-			{ key: 'month', template: '%M 月', enabled: false },
-			{ key: 'week', template: '%W 週', enabled: false },
-			{ key: 'day', template: '%D 日', enabled: true },
-			{ key: 'hour', template: '%h 時', enabled: true },
-			{ key: 'minute', template: '%m 分', enabled: true },
-			{ key: 'second', template: '%s 秒', enabled: true },
-			{ key: 'millisecond', template: '%ms 毫秒', enabled: false },
+			{ key: 'year', template: '%Y 年', enabled: false, breakAfter: false },
+			{ key: 'month', template: '%M 月', enabled: false, breakAfter: false },
+			{ key: 'week', template: '%W 週', enabled: false, breakAfter: false },
+			{ key: 'day', template: '%D 日', enabled: true, breakAfter: true },
+			{ key: 'hour', template: '%h 時', enabled: true, breakAfter: false },
+			{ key: 'minute', template: '%m 分', enabled: true, breakAfter: false },
+			{ key: 'second', template: '%s 秒', enabled: true, breakAfter: false },
+			{ key: 'millisecond', template: '.%ms 毫秒', enabled: false, breakAfter: false },
 		],
 		preset4: [
-			{ key: 'year', template: '%Y 年', enabled: false },
-			{ key: 'month', template: '%M 月', enabled: false },
-			{ key: 'week', template: '%W 週', enabled: false },
-			{ key: 'day', template: '%D 日', enabled: false },
-			{ key: 'hour', template: '%h 時', enabled: true },
-			{ key: 'minute', template: '%m 分', enabled: true },
-			{ key: 'second', template: '%s 秒', enabled: true },
-			{ key: 'millisecond', template: '%ms 毫秒', enabled: false },
+			{ key: 'year', template: '%Y 年', enabled: false, breakAfter: false },
+			{ key: 'month', template: '%M 月', enabled: false, breakAfter: false },
+			{ key: 'week', template: '%W 週', enabled: false, breakAfter: false },
+			{ key: 'day', template: '%D 日', enabled: false, breakAfter: false },
+			{ key: 'hour', template: '%h 時', enabled: true, breakAfter: false },
+			{ key: 'minute', template: '%m 分', enabled: true, breakAfter: false },
+			{ key: 'second', template: '%s 秒', enabled: true, breakAfter: false },
+			{ key: 'millisecond', template: '%ms 毫秒', enabled: false, breakAfter: false },
 		],
 		preset5: [
-			{ key: 'year', template: '%Y 年', enabled: true },
-			{ key: 'month', template: '%M 月', enabled: true },
-			{ key: 'week', template: '%W 週', enabled: false },
-			{ key: 'day', template: '%D 日', enabled: true },
-			{ key: 'hour', template: '%h 時', enabled: false },
-			{ key: 'minute', template: '%m 分', enabled: false },
-			{ key: 'second', template: '%s 秒', enabled: false },
-			{ key: 'millisecond', template: '%ms 毫秒', enabled: false },
+			{ key: 'year', template: '%Y 年', enabled: true, breakAfter: false },
+			{ key: 'month', template: '%M 月', enabled: true, breakAfter: false },
+			{ key: 'week', template: '%W 週', enabled: false, breakAfter: false },
+			{ key: 'day', template: '%D 日', enabled: true, breakAfter: false },
+			{ key: 'hour', template: '%h 時', enabled: false, breakAfter: false },
+			{ key: 'minute', template: '%m 分', enabled: false, breakAfter: false },
+			{ key: 'second', template: '%s 秒', enabled: false, breakAfter: false },
+			{ key: 'millisecond', template: '%ms 毫秒', enabled: false, breakAfter: false },
 		],
 		preset6: [
-			{ key: 'year', template: '%Y 年', enabled: false },
-			{ key: 'month', template: '%M 月', enabled: false },
-			{ key: 'week', template: '%W 週', enabled: false },
-			{ key: 'day', template: '%D 日', enabled: false },
-			{ key: 'hour', template: '%h 時', enabled: false },
-			{ key: 'minute', template: '%m 分', enabled: false },
-			{ key: 'second', template: '%s 秒', enabled: false },
-			{ key: 'millisecond', template: '%ms 毫秒', enabled: true },
+			{ key: 'year', template: '%Y 年', enabled: false, breakAfter: false },
+			{ key: 'month', template: '%M 月', enabled: false, breakAfter: false },
+			{ key: 'week', template: '%W 週', enabled: false, breakAfter: false },
+			{ key: 'day', template: '%D 日', enabled: false, breakAfter: false },
+			{ key: 'hour', template: '%h 時', enabled: false, breakAfter: false },
+			{ key: 'minute', template: '%m 分', enabled: false, breakAfter: false },
+			{ key: 'second', template: '%s 秒', enabled: false, breakAfter: false },
+			{ key: 'millisecond', template: '%ms 毫秒', enabled: true, breakAfter: false },
 		],
 	};
 
@@ -504,7 +519,6 @@ import Layout from '../layouts/Layout.astro';
 		panelPoint: document.getElementById('panel-point') as HTMLDivElement,
 		panelDuration: document.getElementById('panel-duration') as HTMLDivElement,
 		pointInput: document.getElementById('point-input') as HTMLInputElement,
-		applyBtn: document.getElementById('apply-btn') as HTMLButtonElement,
 		resetBtn: document.getElementById('reset-btn') as HTMLButtonElement,
 		editConfigBtn: document.getElementById('edit-config-btn') as HTMLButtonElement,
 		stopBehaviorWrap: document.getElementById('stop-behavior-wrap') as HTMLDivElement,
@@ -529,6 +543,7 @@ import Layout from '../layouts/Layout.astro';
 	let config = loadConfig();
 	let frozenDisplay: string | null = null;
 	let resetReferenceIso: string | null = null;
+	let isUpdatingFromForm = false;
 
 	function loadConfig(): TimerConfig {
 		const data = store.get();
@@ -543,7 +558,12 @@ import Layout from '../layouts/Layout.astro';
 				? data.displayUnits.filter((u): u is UnitKey => ORDER.includes(u as UnitKey))
 				: structuredClone(defaultConfig).displayUnits,
 			displaySettings: Array.isArray(data.displaySettings) && data.displaySettings.length > 0
-				? data.displaySettings.filter((s): s is DisplayUnitSetting => ORDER.includes(s.key))
+				? data.displaySettings
+					.filter((s): s is DisplayUnitSetting => ORDER.includes(s.key))
+					.map((s) => ({
+						...s,
+						breakAfter: Boolean(s.breakAfter),
+					}))
 				: structuredClone(defaultConfig).displaySettings,
 		};
 	}
@@ -684,7 +704,6 @@ import Layout from '../layouts/Layout.astro';
 		const enabledSettings = settings.filter((s) => s.enabled);
 		if (enabledSettings.length === 0) return '0';
 
-		// 只用「有勾選」的單位來重算
 		const selectedKeys = enabledSettings.map((s) => s.key);
 		const rebalance = rebalanceForSelection(diff, selectedKeys);
 
@@ -693,36 +712,31 @@ import Layout from '../layouts/Layout.astro';
 
 		for (const setting of enabledSettings) {
 			const value = rebalance[setting.key];
-			const template = setting.template;
-
-			let result = template;
+			let result = setting.template;
 
 			if (setting.key === 'millisecond') {
-				result = result.replace('%ms', String(value).padStart(3, '0'));
+				result = result.replaceAll('%ms', String(value).padStart(3, '0'));
 			} else if (setting.key === 'hour') {
-				result = result.replace('%h', String(value).padStart(2, '0'));
+				result = result.replaceAll('%h', String(value).padStart(2, '0'));
 			} else if (setting.key === 'minute') {
-				result = result.replace('%m', String(value).padStart(2, '0'));
+				result = result.replaceAll('%m', String(value).padStart(2, '0'));
 			} else if (setting.key === 'second') {
-				result = result.replace('%s', String(value).padStart(2, '0'));
+				result = result.replaceAll('%s', String(value).padStart(2, '0'));
 			} else if (setting.key === 'year') {
-				result = result.replace('%Y', String(value));
+				result = result.replaceAll('%Y', String(value));
 			} else if (setting.key === 'month') {
-				result = result.replace('%M', String(value));
+				result = result.replaceAll('%M', String(value));
 			} else if (setting.key === 'week') {
-				result = result.replace('%W', String(value));
+				result = result.replaceAll('%W', String(value));
 			} else if (setting.key === 'day') {
-				result = result.replace('%D', String(value));
+				result = result.replaceAll('%D', String(value));
 			}
 
-			if (template.includes(';')) {
-				if (currentLine.length > 0) {
-					lines.push(currentLine);
-					currentLine = [];
-				}
-				currentLine.push(result.replace(/;/g, ''));
-			} else {
-				currentLine.push(result);
+			currentLine.push(result);
+
+			if (setting.breakAfter) {
+				lines.push(currentLine);
+				currentLine = [];
 			}
 		}
 
@@ -730,8 +744,7 @@ import Layout from '../layouts/Layout.astro';
 			lines.push(currentLine);
 		}
 
-		const output = lines.map((line) => line.join(' ')).join('<br/>');
-		return output.length > 0 ? output : '0';
+		return lines.map((line) => line.join(' ')).join('<br/>');
 	}
 
 	function setMethod(method: InputMethod) {
@@ -745,6 +758,7 @@ import Layout from '../layouts/Layout.astro';
 
 	function renderDisplaySettingsUI() {
 		els.displaySettingsGrid.innerHTML = '';
+
 		for (const setting of config.displaySettings) {
 			const item = document.createElement('div');
 			item.className = 'display-settings-item';
@@ -757,6 +771,20 @@ import Layout from '../layouts/Layout.astro';
 			checkboxLabel.appendChild(checkbox);
 			checkboxLabel.appendChild(document.createTextNode(UNIT_LABELS[setting.key]));
 
+			const breakLabel = document.createElement('label');
+			breakLabel.className = 'display-settings-break';
+
+			const breakCheckbox = document.createElement('input');
+			breakCheckbox.type = 'checkbox';
+			breakCheckbox.checked = Boolean(setting.breakAfter);
+			breakCheckbox.dataset.unitKey = setting.key;
+
+			const breakText = document.createElement('span');
+			breakText.textContent = '換行';
+
+			breakLabel.appendChild(breakCheckbox);
+			breakLabel.appendChild(breakText);
+
 			const templateInput = document.createElement('input');
 			templateInput.type = 'text';
 			templateInput.value = setting.template;
@@ -764,30 +792,43 @@ import Layout from '../layouts/Layout.astro';
 			templateInput.dataset.unitKey = setting.key;
 
 			item.appendChild(checkboxLabel);
+			item.appendChild(breakLabel);
 			item.appendChild(templateInput);
 
 			els.displaySettingsGrid.appendChild(item);
 
-			// Event listeners
-		checkbox.addEventListener('change', () => {
-			const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
-			if (idx !== -1) {
-				config.displaySettings[idx].enabled = checkbox.checked;
-				isUpdatingFromForm = true;
-				saveConfig();
-				isUpdatingFromForm = false;
-			}
-		});
+			checkbox.addEventListener('change', () => {
+				const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
+				if (idx !== -1) {
+					config.displaySettings[idx].enabled = checkbox.checked;
+					isUpdatingFromForm = true;
+					saveConfig();
+					isUpdatingFromForm = false;
+					render();
+				}
+			});
 
-		templateInput.addEventListener('input', () => {
-			const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
-			if (idx !== -1) {
-				config.displaySettings[idx].template = templateInput.value;
-				isUpdatingFromForm = true;
-				saveConfig();
-				isUpdatingFromForm = false;
-			}
-		});
+			templateInput.addEventListener('input', () => {
+				const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
+				if (idx !== -1) {
+					config.displaySettings[idx].template = templateInput.value;
+					isUpdatingFromForm = true;
+					saveConfig();
+					isUpdatingFromForm = false;
+					render();
+				}
+			});
+
+			breakCheckbox.addEventListener('change', () => {
+				const idx = config.displaySettings.findIndex((s) => s.key === setting.key);
+				if (idx !== -1) {
+					config.displaySettings[idx].breakAfter = breakCheckbox.checked;
+					isUpdatingFromForm = true;
+					saveConfig();
+					isUpdatingFromForm = false;
+					render();
+				}
+			});
 		}
 	}
 
@@ -909,19 +950,28 @@ import Layout from '../layouts/Layout.astro';
 			}
 
 			if (config.stopBehavior === 'zero') {
-				els.displayValue.innerHTML = buildDisplay({ year: 0, month: 0, week: 0, day: 0, hour: 0, minute: 0, second: 0, millisecond: 0 }, config.displaySettings);
+				els.displayValue.innerHTML = buildDisplay({
+					year: 0,
+					month: 0,
+					week: 0,
+					day: 0,
+					hour: 0,
+					minute: 0,
+					second: 0,
+					millisecond: 0,
+				}, config.displaySettings);
 				els.doneBehaviorHint.textContent = '已達時間點 · 歸零';
 				return;
 			}
 
-		if (config.stopBehavior === 'reset') {
-			const nowForReset = new Date();
-			const nextTarget = addCalendarDuration(nowForReset, config.duration);
-			config.targetIso = nextTarget.toISOString();
-			saveConfig();
-			els.doneBehaviorHint.textContent = '已達時間點 · 已重置';
-			return;
-		}
+			if (config.stopBehavior === 'reset') {
+				const nowForReset = new Date();
+				const nextTarget = addCalendarDuration(nowForReset, config.duration);
+				config.targetIso = nextTarget.toISOString();
+				saveConfig();
+				els.doneBehaviorHint.textContent = '已達時間點 · 已重置';
+				return;
+			}
 		}
 
 		const breakdown = diffCalendar(target, now);
@@ -935,10 +985,7 @@ import Layout from '../layouts/Layout.astro';
 		els.displayMeta.textContent = formatMeta(target, false);
 	}
 
-	let isUpdatingFromForm = false;
-
 	store.subscribe((newConfig) => {
-		// If update came from form input, don't re-render the form
 		if (!isUpdatingFromForm) {
 			config = newConfig;
 			syncForm(true);
@@ -996,7 +1043,6 @@ import Layout from '../layouts/Layout.astro';
 		});
 	});
 
-	// 為時間點輸入框添加實時事件監聽
 	els.pointInput.addEventListener('change', () => {
 		const value = els.pointInput.value;
 		config.targetIso = value ? new Date(value).toISOString() : null;
@@ -1008,7 +1054,6 @@ import Layout from '../layouts/Layout.astro';
 		render();
 	});
 
-	// 為倒數輸入框添加實時事件監聽
 	const durationKeys: UnitKey[] = ['year', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond'];
 	for (const key of durationKeys) {
 		const input = els.durationInputs[key as keyof typeof els.durationInputs];
