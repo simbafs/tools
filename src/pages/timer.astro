@@ -75,22 +75,24 @@ import Layout from '../layouts/Layout.astro';
 					</div>
 				</div>
 
-				<div class="grid grid-cols-4 gap-2">
-					<div>
-						<input id="dur-hour" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-						<div class="mt-1 text-center text-[11px] text-zinc-500">時</div>
-					</div>
-					<div>
-						<input id="dur-minute" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-						<div class="mt-1 text-center text-[11px] text-zinc-500">分</div>
-					</div>
-					<div>
-						<input id="dur-second" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-						<div class="mt-1 text-center text-[11px] text-zinc-500">秒</div>
-					</div>
-					<div>
-						<input id="dur-ms" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
-						<div class="mt-1 text-center text-[11px] text-zinc-500">毫秒</div>
+				<div>
+					<div class="grid grid-cols-4 gap-2">
+						<div>
+							<input id="dur-hour" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+							<div class="mt-1 text-center text-[11px] text-zinc-500">時</div>
+						</div>
+						<div>
+							<input id="dur-minute" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+							<div class="mt-1 text-center text-[11px] text-zinc-500">分</div>
+						</div>
+						<div>
+							<input id="dur-second" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+							<div class="mt-1 text-center text-[11px] text-zinc-500">秒</div>
+						</div>
+						<div>
+							<input id="dur-ms" type="number" min="0" placeholder="0" class="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-center text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-950" />
+							<div class="mt-1 text-center text-[11px] text-zinc-500">毫秒</div>
+						</div>
 					</div>
 				</div>
 
@@ -198,7 +200,8 @@ import Layout from '../layouts/Layout.astro';
 	}
 
 	#display-value {
-		font-size: clamp(3rem, 20vw, 18rem);
+		font-size: 13vw;
+		font-variant-numeric: tabular-nums;
 	}
 
 	#config-dialog {
@@ -477,12 +480,32 @@ import Layout from '../layouts/Layout.astro';
 	function buildDisplay(diff: DurationBreakdown, selectedUnits: UnitKey[]) {
 		const normalizedSelection = ORDER.filter((key) => selectedUnits.includes(key));
 		const rebalance = rebalanceForSelection(diff, normalizedSelection);
-		const parts = normalizedSelection
-			.map((key) => ({ key, value: rebalance[key] }))
-			.filter(({ value }, index) => value !== 0 || index === normalizedSelection.length - 1);
 
-		if (parts.length === 0) return '0 秒';
-		return parts.map(({ key, value }) => `${value.toLocaleString()} ${UNIT_LABELS[key]}`).join(' ');
+		const dateUnits = normalizedSelection.filter((k) => ['year', 'month', 'week', 'day'].includes(k));
+		const hmsUnits = normalizedSelection.filter((k) => ['hour', 'minute', 'second'].includes(k));
+		const msUnits = normalizedSelection.filter((k) => ['millisecond'].includes(k));
+
+		const padTime = (key: UnitKey, value: number) => {
+			if (key === 'millisecond') return String(value).padStart(3, '0');
+			if (key === 'hour' || key === 'minute' || key === 'second') return String(value).padStart(2, '0');
+			return String(value);
+		};
+
+		const buildLine = (units: UnitKey[]) => {
+			const parts = units
+				.map((key) => ({ key, value: rebalance[key] }))
+				.filter(({ value }, index) => value !== 0 || index === units.length - 1);
+			if (parts.length === 0) return '';
+			return parts.map(({ key, value }) => `${padTime(key, value)} ${UNIT_LABELS[key]}`).join(' ');
+		};
+
+		const dateLine = buildLine(dateUnits);
+		const hmsLine = buildLine(hmsUnits);
+		const msLine = buildLine(msUnits);
+
+		const lines = [dateLine, hmsLine, msLine].filter(l => l);
+		if (lines.length === 0) return '0 秒';
+		return lines.join('<br/>');
 	}
 
 	function setMethod(method: InputMethod) {
@@ -605,7 +628,7 @@ import Layout from '../layouts/Layout.astro';
 
 		if (isCountdown) {
 			const breakdown = diffCalendar(now, target);
-			els.displayValue.textContent = buildDisplay(breakdown, config.displayUnits);
+			els.displayValue.innerHTML = buildDisplay(breakdown, config.displayUnits);
 			els.displayMeta.textContent = formatMeta(target, true);
 			return;
 		}
@@ -644,7 +667,13 @@ import Layout from '../layouts/Layout.astro';
 		}
 
 		const breakdown = diffCalendar(target, now);
-		els.displayValue.textContent = '+' + buildDisplay(breakdown, config.displayUnits);
+		const lines = buildDisplay(breakdown, config.displayUnits).split('<br/>');
+		if (lines.length >= 2) {
+			lines[1] = '+' + lines[1];
+		} else {
+			lines[0] = '+' + lines[0];
+		}
+		els.displayValue.innerHTML = lines.join('<br/>');
 		els.displayMeta.textContent = formatMeta(target, false);
 	}
 
