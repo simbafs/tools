@@ -1,0 +1,126 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="QR Code">
+	<div id="qr-container" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-zinc-950">
+		<canvas id="qr-canvas" class="max-w-[90vw] max-h-[90vh]"></canvas>
+		<div id="hint" class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-zinc-950/80">
+			<span class="text-2xl font-bold text-zinc-600 dark:text-zinc-300">Double-click to edit · F for fullscreen</span>
+		</div>
+	</div>
+
+	<div id="input-container" class="fixed inset-0 hidden flex-col items-center justify-center gap-4 bg-white dark:bg-zinc-950">
+		<input
+			id="qr-input"
+			type="text"
+			class="w-full max-w-md rounded-xl border border-zinc-300 bg-white px-4 py-3 text-lg outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/15 dark:border-zinc-700 dark:bg-zinc-900"
+			placeholder="Enter URL or text"
+		/>
+		<button
+			id="generate-btn"
+			class="rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-blue-700 active:scale-95"
+		>
+			Generate
+		</button>
+	</div>
+</Layout>
+
+<script>
+	import QRCode from 'qrcode';
+	import { URLStore } from '../lib/url-store';
+
+	const store = new URLStore<string>('');
+
+	const els = {
+		qrContainer: document.getElementById('qr-container')!,
+		qrCanvas: document.getElementById('qr-canvas') as HTMLCanvasElement,
+		inputContainer: document.getElementById('input-container')!,
+		qrInput: document.getElementById('qr-input') as HTMLInputElement,
+		generateBtn: document.getElementById('generate-btn')!,
+		hint: document.getElementById('hint')!,
+	};
+
+	let currentValue = '';
+
+	function getDefaultValue(): string {
+		return window.location.origin;
+	}
+
+	async function renderQR(value: string) {
+		currentValue = value;
+		const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+		await QRCode.toCanvas(els.qrCanvas, value || getDefaultValue(), {
+			width: size,
+			margin: 0,
+			color: {
+				dark: '#000000',
+				light: '#ffffff',
+			},
+		});
+	}
+
+	function showInput() {
+		els.qrContainer.classList.add('hidden');
+		els.inputContainer.classList.remove('hidden');
+		els.inputContainer.classList.add('flex');
+		els.qrInput.value = currentValue || getDefaultValue();
+		els.qrInput.select();
+	}
+
+	function showQR() {
+		els.inputContainer.classList.add('hidden');
+		els.inputContainer.classList.remove('flex');
+		els.qrContainer.classList.remove('hidden');
+		store.set(currentValue);
+		renderQR(currentValue);
+	}
+
+	function toggleFullscreen() {
+		if (!document.fullscreenElement) {
+			document.documentElement.requestFullscreen();
+		} else {
+			document.exitFullscreen();
+		}
+	}
+
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'f' || e.key === 'F') {
+			toggleFullscreen();
+		}
+	});
+
+	els.qrCanvas.addEventListener('dblclick', showInput);
+
+	document.addEventListener('click', () => {
+		els.hint.classList.add('hidden');
+	}, { once: true });
+
+	els.generateBtn.addEventListener('click', () => {
+		currentValue = els.qrInput.value.trim();
+		showQR();
+	});
+
+	els.qrInput.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') {
+			els.generateBtn.click();
+		}
+	});
+
+	const saved = store.get();
+	renderQR(saved);
+
+	store.subscribe((val) => {
+		if (val !== currentValue) {
+			renderQR(val);
+		}
+	});
+</script>
+
+<style>
+	@media (prefers-color-scheme: dark) {
+		#qr-canvas {
+			filter: invert(1);
+		}
+	}
+</style>
