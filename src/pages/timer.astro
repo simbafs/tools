@@ -18,7 +18,7 @@ import Layout from '../layouts/Layout.astro';
 	</div>
 
 	<div id="fullscreen-hint" class="fixed bottom-16 left-0 right-0 text-center text-xs text-zinc-400 dark:text-zinc-500">
-		按 F 鍵進入全螢幕
+		按 F 鍵或長按進入全螢幕
 	</div>
 
 	<button id="edit-config-btn" type="button" class="fixed top-4 right-4 z-40 rounded-xl bg-zinc-200/80 p-3 text-zinc-600 backdrop-blur-sm transition hover:bg-zinc-300 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:bg-zinc-700" title="設定">
@@ -1070,6 +1070,32 @@ import Layout from '../layouts/Layout.astro';
 			}
 		}
 	});
+
+	const displayValue = document.getElementById('display-value');
+	if (displayValue) {
+		let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+		displayValue.addEventListener('touchstart', () => {
+			longPressTimer = setTimeout(() => {
+				if (!document.fullscreenElement) {
+					document.documentElement.requestFullscreen();
+				} else {
+					document.exitFullscreen();
+				}
+			}, 500);
+		});
+		displayValue.addEventListener('touchend', () => {
+			if (longPressTimer) {
+				clearTimeout(longPressTimer);
+				longPressTimer = null;
+			}
+		});
+		displayValue.addEventListener('touchmove', () => {
+			if (longPressTimer) {
+				clearTimeout(longPressTimer);
+				longPressTimer = null;
+			}
+		});
+	}
 
 	const fullscreenHint = document.getElementById('fullscreen-hint');
 	if (fullscreenHint) {

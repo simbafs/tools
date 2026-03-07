@@ -6,7 +6,7 @@ import Layout from '../layouts/Layout.astro';
 	<div id="qr-container" class="fixed inset-0 flex items-center justify-center bg-white dark:bg-zinc-950">
 		<canvas id="qr-canvas" class="max-w-[90vw] max-h-[90vh]"></canvas>
 		<div id="hint" class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-zinc-950/80">
-			<span class="text-2xl font-bold text-zinc-600 dark:text-zinc-300">Double-click to edit · F for fullscreen</span>
+			<span class="text-2xl font-bold text-zinc-600 dark:text-zinc-300">Double-click to edit · F / Long press for fullscreen</span>
 		</div>
 	</div>
 
@@ -91,6 +91,25 @@ import Layout from '../layouts/Layout.astro';
 	});
 
 	els.qrCanvas.addEventListener('dblclick', showInput);
+
+	let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+	els.qrCanvas.addEventListener('touchstart', () => {
+		longPressTimer = setTimeout(() => {
+			toggleFullscreen();
+		}, 500);
+	});
+	els.qrCanvas.addEventListener('touchend', () => {
+		if (longPressTimer) {
+			clearTimeout(longPressTimer);
+			longPressTimer = null;
+		}
+	});
+	els.qrCanvas.addEventListener('touchmove', () => {
+		if (longPressTimer) {
+			clearTimeout(longPressTimer);
+			longPressTimer = null;
+		}
+	});
 
 	document.addEventListener('click', () => {
 		els.hint.classList.add('hidden');
