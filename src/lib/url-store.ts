@@ -1,8 +1,5 @@
 // src/lib/url-store.ts
 
-// The query parameter name where all data is stored.
-const QUERY_PARAM = 'q'
-
 // Custom event name for state updates not triggered by popstate
 const EVENT_NAME = 'url-store-update'
 
@@ -33,7 +30,40 @@ function decode<T>(str: string): T | null {
 }
 
 /**
- * A generic store that syncs state with the URL query parameter.
+ * Computes the diff between current and default values.
+ * Returns only the keys where values differ from defaults.
+ * For non-object types, returns the current value if it differs from default.
+ */
+function getDiff<T>(current: T, defaults: T): Partial<T> {
+	// Handle primitives and null
+	if (typeof current !== 'object' || current === null) {
+		if (current !== defaults) {
+			return { value: current } as unknown as Partial<T>
+		}
+		return {} as Partial<T>
+	}
+
+	const diff: Partial<T> = {}
+
+	for (const key of Object.keys(current) as Array<keyof T>) {
+		const currentValue = current[key]
+		const defaultValue = defaults[key]
+
+		// Deep comparison for objects
+		if (
+			currentValue !== defaultValue &&
+			JSON.stringify(currentValue) !== JSON.stringify(defaultValue)
+		) {
+			(diff as Record<string, unknown>)[key as string] = currentValue
+		}
+	}
+
+	return diff
+}
+
+/**
+ * A generic store that syncs state with the URL hash fragment.
+ * Only saves values that differ from defaults (sparse saving).
  * Supports listening to changes via .subscribe()
  */
 export class URLStore<T> {
@@ -44,36 +74,58 @@ export class URLStore<T> {
 	}
 
 	/**
-	 * Reads the current state from the URL.
-	 * Returns the default value if parsing fails or parameter is missing.
+	 * Reads the current state from the URL hash.
+	 * Merges saved diff with default values.
+	 * Returns the default value if hash is empty or parsing fails.
 	 */
 	get(): T {
 		if (typeof window === 'undefined') {
 			return this.defaultValue
 		}
 
-		const params = new URLSearchParams(window.location.search)
-		const val = params.get(QUERY_PARAM)
+		const hash = window.location.hash.slice(1) // remove leading '#'
 
-		if (!val) {
+		if (!hash) {
 			return this.defaultValue
 		}
 
-		const decoded = decode<T>(val)
-		return decoded !== null ? decoded : this.defaultValue
+		const decoded = decode<Partial<T>>(hash)
+
+		if (decoded === null) {
+			return this.defaultValue
+		}
+
+		// Handle primitives (wrapped in { value: ... })
+		const isPrimitive = typeof this.defaultValue !== 'object' && this.defaultValue !== null
+		if (isPrimitive) {
+			return (decoded as { value?: T }).value ?? this.defaultValue
+		}
+
+		// Merge defaults with saved diff
+		return { ...this.defaultValue, ...decoded }
 	}
 
 	/**
-	 * Updates the URL with the new state.
+	 * Updates the URL hash with the diff (only non-default values).
+	 * If all values are default, clears the hash.
 	 * @param data The new state to save.
 	 * @param pushHistory If true, creates a new history entry (pushState). If false, replaces the current entry (replaceState). Default: false.
 	 */
 	set(data: T, pushHistory = false): void {
 		if (typeof window === 'undefined') return
 
-		const encoded = encode(data)
+		// Compute diff: only values different from defaults
+		const diff = getDiff(data, this.defaultValue)
+
+		// If all values are default, clear the hash
+		if (Object.keys(diff).length === 0) {
+			this.clear(pushHistory)
+			return
+		}
+
+		const encoded = encode(diff)
 		const url = new URL(window.location.href)
-		url.searchParams.set(QUERY_PARAM, encoded)
+		url.hash = encoded
 
 		if (pushHistory) {
 			window.history.pushState({}, '', url.toString())
@@ -86,14 +138,14 @@ export class URLStore<T> {
 	}
 
 	/**
-	 * Clears the state from the URL.
+	 * Clears the state from the URL hash.
 	 * @param pushHistory If true, creates a new history entry (pushState). If false, replaces the current entry (replaceState). Default: false.
 	 */
 	clear(pushHistory = false): void {
 		if (typeof window === 'undefined') return
 
 		const url = new URL(window.location.href)
-		url.searchParams.delete(QUERY_PARAM)
+		url.hash = ''
 		if (pushHistory) {
 			window.history.pushState({}, '', url.toString())
 		} else {
@@ -128,11 +180,6 @@ export class URLStore<T> {
 
 		window.addEventListener(EVENT_NAME, handleCustomEvent)
 		window.addEventListener('popstate', handlePopState)
-
-		// Initialize with current state immediately?
-		// Usually subscribers want the current value right away.
-		// However, standard stores often don't trigger on subscribe.
-		// Let's assume the consumer calls .get() for initial render.
 
 		return () => {
 			window.removeEventListener(EVENT_NAME, handleCustomEvent)
