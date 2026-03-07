@@ -375,11 +375,9 @@ import Layout from '../layouts/Layout.astro';
 		inputMethod: InputMethod;
 		targetIso: string | null;
 		duration: Record<UnitKey, number>;
-		displayUnits: UnitKey[];
 		displaySettings: DisplayUnitSetting[];
 		finishMode: FinishMode;
 		stopBehavior: StopBehavior;
-		started: boolean;
 	}
 
 	interface DurationBreakdown {
@@ -500,11 +498,9 @@ import Layout from '../layouts/Layout.astro';
 			second: 0,
 			millisecond: 0,
 		},
-		displayUnits: ['year', 'month', 'week', 'day', 'hour', 'minute', 'second'],
 		displaySettings: structuredClone(defaultDisplaySettings),
 		finishMode: 'countup',
 		stopBehavior: 'freeze',
-		started: false,
 	};
 
 	const store = new URLStore<TimerConfig>(defaultConfig, { forceKeys: ['targetIso'] });
@@ -531,7 +527,6 @@ import Layout from '../layouts/Layout.astro';
 			second: document.getElementById('dur-second') as HTMLInputElement,
 			millisecond: document.getElementById('dur-ms') as HTMLInputElement,
 		},
-		unitChecks: Array.from(document.querySelectorAll('.unit-chip input[type="checkbox"]')) as HTMLInputElement[],
 		finishModeRadios: Array.from(document.querySelectorAll('input[name="finish-mode"]')) as HTMLInputElement[],
 		stopBehaviorRadios: Array.from(document.querySelectorAll('input[name="stop-behavior"]')) as HTMLInputElement[],
 		presetButtons: Array.from(document.querySelectorAll('.preset-btn')) as HTMLButtonElement[],
@@ -540,7 +535,6 @@ import Layout from '../layouts/Layout.astro';
 
 	let config = loadConfig();
 	let frozenDisplay: string | null = null;
-	let resetReferenceIso: string | null = null;
 	let isUpdatingFromForm = false;
 
 	function loadConfig(): TimerConfig {
@@ -552,9 +546,6 @@ import Layout from '../layouts/Layout.astro';
 				...structuredClone(defaultConfig).duration,
 				...(data.duration ?? {}),
 			},
-			displayUnits: Array.isArray(data.displayUnits) && data.displayUnits.length > 0
-				? data.displayUnits.filter((u): u is UnitKey => ORDER.includes(u as UnitKey))
-				: structuredClone(defaultConfig).displayUnits,
 			displaySettings: Array.isArray(data.displaySettings) && data.displaySettings.length > 0
 				? data.displaySettings
 					.filter((s): s is DisplayUnitSetting => ORDER.includes(s.key))
@@ -693,12 +684,6 @@ import Layout from '../layouts/Layout.astro';
 		if (!selection.includes('year')) {
 			map.month += map.year * 12;
 			map.year = 0;
-		}
-
-		if (!selection.includes('month')) {
-			map.week += Math.floor(map.month * 30.436875 / 7);
-			map.day += Math.round((map.month * 30.436875) % 7);
-			map.month = 0;
 		}
 
 		if (!selection.includes('millisecond')) {
@@ -858,10 +843,6 @@ import Layout from '../layouts/Layout.astro';
 			}
 		}
 
-		els.unitChecks.forEach((checkbox) => {
-			checkbox.checked = config.displayUnits.includes(checkbox.value as UnitKey);
-		});
-
 		els.finishModeRadios.forEach((radio) => {
 			radio.checked = radio.value === config.finishMode;
 		});
@@ -882,10 +863,8 @@ import Layout from '../layouts/Layout.astro';
 	function resetAll() {
 		config = structuredClone(defaultConfig);
 		frozenDisplay = null;
-		resetReferenceIso = null;
 		syncForm();
 		clearConfig();
-		// saveConfig();
 		render();
 	}
 
@@ -912,15 +891,6 @@ import Layout from '../layouts/Layout.astro';
 	}
 
 	function render() {
-		// if (!config.started || !config.targetIso) {
-		// 	els.displayValue.textContent = '請先完成設定';
-		// 	els.displayMeta.textContent = '尚未指定時間點';
-		// 	els.displayValue.classList.remove('blinking');
-		// 	els.doneBehaviorHint.classList.add('hidden');
-		// 	els.displayMeta.classList.remove('hidden');
-		// 	return;
-		// }
-
 		const now = new Date();
 		if (!config.targetIso) return;
 		const target = new Date(config.targetIso);
@@ -1057,10 +1027,6 @@ import Layout from '../layouts/Layout.astro';
 	els.pointInput.addEventListener('change', () => {
 		const value = els.pointInput.value;
 		config.targetIso = value ? new Date(value).toISOString() : null;
-		if (!config.started && config.targetIso) {
-			config.started = true;
-			resetReferenceIso = config.targetIso;
-		}
 		saveConfig();
 		render();
 	});
@@ -1076,10 +1042,6 @@ import Layout from '../layouts/Layout.astro';
 				}
 				const now = new Date();
 				config.targetIso = addCalendarDuration(now, config.duration).toISOString();
-				if (!config.started) {
-					config.started = true;
-					resetReferenceIso = config.targetIso;
-				}
 				saveConfig();
 				render();
 			});
