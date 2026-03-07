@@ -3,6 +3,10 @@
 // Custom event name for state updates not triggered by popstate
 const EVENT_NAME = 'url-store-update'
 
+export interface URLStoreOptions {
+	forceKeys?: string[]
+}
+
 /**
  * Encodes data to a URL-safe Base64 string.
  * Handles UTF-8 characters properly.
@@ -33,11 +37,12 @@ function decode<T>(str: string): T | null {
  * Computes the diff between current and default values.
  * Returns only the keys where values differ from defaults.
  * For non-object types, returns the current value if it differs from default.
+ * Keys in forceKeys are always included regardless of whether they match defaults.
  */
-function getDiff<T>(current: T, defaults: T): Partial<T> {
+function getDiff<T>(current: T, defaults: T, forceKeys: string[] = []): Partial<T> {
 	// Handle primitives and null
 	if (typeof current !== 'object' || current === null) {
-		if (current !== defaults) {
+		if (current !== defaults || forceKeys.includes('value')) {
 			return { value: current } as unknown as Partial<T>
 		}
 		return {} as Partial<T>
@@ -48,13 +53,18 @@ function getDiff<T>(current: T, defaults: T): Partial<T> {
 	for (const key of Object.keys(current) as Array<keyof T>) {
 		const currentValue = current[key]
 		const defaultValue = defaults[key]
+		const isForced = forceKeys.includes(key as string)
 
-		// Deep comparison for objects
-		if (
-			currentValue !== defaultValue &&
-			JSON.stringify(currentValue) !== JSON.stringify(defaultValue)
-		) {
-			(diff as Record<string, unknown>)[key as string] = currentValue
+		// Include if forced or if value differs from default
+		if (isForced || currentValue !== defaultValue) {
+			if (typeof currentValue === 'object' && currentValue !== null) {
+				// For objects, compare JSON stringification
+				if (isForced || JSON.stringify(currentValue) !== JSON.stringify(defaultValue)) {
+					(diff as Record<string, unknown>)[key as string] = currentValue
+				}
+			} else {
+				(diff as Record<string, unknown>)[key as string] = currentValue
+			}
 		}
 	}
 
@@ -64,13 +74,16 @@ function getDiff<T>(current: T, defaults: T): Partial<T> {
 /**
  * A generic store that syncs state with the URL hash fragment.
  * Only saves values that differ from defaults (sparse saving).
+ * Supports force-saving specific keys regardless of whether they match defaults.
  * Supports listening to changes via .subscribe()
  */
 export class URLStore<T> {
 	private defaultValue: T
+	private forceKeys: string[]
 
-	constructor(defaultValue: T) {
+	constructor(defaultValue: T, options: URLStoreOptions = {}) {
 		this.defaultValue = defaultValue
+		this.forceKeys = options.forceKeys ?? []
 	}
 
 	/**
@@ -108,16 +121,17 @@ export class URLStore<T> {
 	/**
 	 * Updates the URL hash with the diff (only non-default values).
 	 * If all values are default, clears the hash.
+	 * Keys in forceKeys are always saved regardless of whether they match defaults.
 	 * @param data The new state to save.
 	 * @param pushHistory If true, creates a new history entry (pushState). If false, replaces the current entry (replaceState). Default: false.
 	 */
 	set(data: T, pushHistory = false): void {
 		if (typeof window === 'undefined') return
 
-		// Compute diff: only values different from defaults
-		const diff = getDiff(data, this.defaultValue)
+		// Compute diff: only values different from defaults, but always include forceKeys
+		const diff = getDiff(data, this.defaultValue, this.forceKeys)
 
-		// If all values are default, clear the hash
+		// If all values are default (and no forced keys), clear the hash
 		if (Object.keys(diff).length === 0) {
 			this.clear(pushHistory)
 			return

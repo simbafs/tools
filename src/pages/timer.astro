@@ -5,12 +5,12 @@ import Layout from '../layouts/Layout.astro';
 <Layout title="Flexible Timer">
 	<div class="fixed inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
 		<div id="display-value" class="w-full px-4 text-center font-bold leading-tight tracking-tight text-zinc-900 dark:text-zinc-50 text-balance">
-			請先完成設定
+			0
 		</div>
 	</div>
 
 	<div id="display-meta" class="fixed bottom-8 left-0 right-0 text-center text-sm text-zinc-500 dark:text-zinc-400">
-		尚未指定時間點
+		正數中
 	</div>
 
 	<div id="done-behavior-hint" class="fixed bottom-8 left-0 right-0 text-center text-xs text-zinc-400 dark:text-zinc-500 hidden">
@@ -414,14 +414,14 @@ import Layout from '../layouts/Layout.astro';
 	};
 
 	const defaultDisplaySettings: DisplayUnitSetting[] = [
-		{ key: 'year', template: '%Y 年', enabled: true, breakAfter: false },
-		{ key: 'month', template: '%M 月', enabled: true, breakAfter: false },
-		{ key: 'week', template: '%W 週', enabled: true, breakAfter: false },
-		{ key: 'day', template: '%D 日', enabled: true, breakAfter: true },
-		{ key: 'hour', template: '%h 時', enabled: true, breakAfter: false },
-		{ key: 'minute', template: '%m 分', enabled: true, breakAfter: false },
-		{ key: 'second', template: '%s 秒', enabled: true, breakAfter: true },
-		{ key: 'millisecond', template: '%ms 毫秒', enabled: false, breakAfter: false },
+		{ key: 'year', template: '%Y 年', enabled: false, breakAfter: false },
+		{ key: 'month', template: '%M 月', enabled: false, breakAfter: false },
+		{ key: 'week', template: '%W 週', enabled: false, breakAfter: false },
+		{ key: 'day', template: '%D 日', enabled: false, breakAfter: false },
+		{ key: 'hour', template: '%h:', enabled: true, breakAfter: false },
+		{ key: 'minute', template: '%m:', enabled: true, breakAfter: false },
+		{ key: 'second', template: '%s.', enabled: true, breakAfter: false },
+		{ key: 'millisecond', template: '%ms', enabled: true, breakAfter: false },
 	];
 
 	const PRESETS: Record<string, DisplayUnitSetting[]> = {
@@ -487,12 +487,9 @@ import Layout from '../layouts/Layout.astro';
 		],
 	};
 
-	const defaultFuture = new Date();
-	defaultFuture.setHours(defaultFuture.getHours() + 1, 0, 0, 0);
-
 	const defaultConfig: TimerConfig = {
 		inputMethod: 'point',
-		targetIso: defaultFuture.toISOString(),
+		targetIso: null,
 		duration: {
 			year: 0,
 			month: 0,
@@ -510,7 +507,7 @@ import Layout from '../layouts/Layout.astro';
 		started: false,
 	};
 
-	const store = new URLStore<TimerConfig>(defaultConfig);
+	const store = new URLStore<TimerConfig>(defaultConfig, { forceKeys: ['targetIso'] });
 
 	const els = {
 		displayValue: document.getElementById('display-value') as HTMLDivElement,
@@ -548,7 +545,7 @@ import Layout from '../layouts/Layout.astro';
 
 	function loadConfig(): TimerConfig {
 		const data = store.get();
-		return {
+		const config: TimerConfig = {
 			...structuredClone(defaultConfig),
 			...data,
 			duration: {
@@ -567,6 +564,13 @@ import Layout from '../layouts/Layout.astro';
 					}))
 				: structuredClone(defaultConfig).displaySettings,
 		};
+
+		if (!config.targetIso) {
+			config.targetIso = new Date().toISOString();
+			store.set(config);
+		}
+
+		return config;
 	}
 
 	function saveConfig() {
@@ -908,16 +912,17 @@ import Layout from '../layouts/Layout.astro';
 	}
 
 	function render() {
-		if (!config.started || !config.targetIso) {
-			els.displayValue.textContent = '請先完成設定';
-			els.displayMeta.textContent = '尚未指定時間點';
-			els.displayValue.classList.remove('blinking');
-			els.doneBehaviorHint.classList.add('hidden');
-			els.displayMeta.classList.remove('hidden');
-			return;
-		}
+		// if (!config.started || !config.targetIso) {
+		// 	els.displayValue.textContent = '請先完成設定';
+		// 	els.displayMeta.textContent = '尚未指定時間點';
+		// 	els.displayValue.classList.remove('blinking');
+		// 	els.doneBehaviorHint.classList.add('hidden');
+		// 	els.displayMeta.classList.remove('hidden');
+		// 	return;
+		// }
 
 		const now = new Date();
+		if (!config.targetIso) return;
 		const target = new Date(config.targetIso);
 		if (Number.isNaN(target.getTime())) {
 			els.displayValue.textContent = '時間格式錯誤';
@@ -989,13 +994,6 @@ import Layout from '../layouts/Layout.astro';
 		}
 		els.displayValue.innerHTML = lines.join('<br/>');
 		els.displayMeta.textContent = formatMeta(target, false);
-	}
-
-	function shouldAutoOpenConfig() {
-		if (!config.started || !config.targetIso) return true;
-
-		const target = new Date(config.targetIso);
-		return Number.isNaN(target.getTime());
 	}
 
 	store.subscribe((newConfig) => {
@@ -1090,10 +1088,6 @@ import Layout from '../layouts/Layout.astro';
 
 	syncForm();
 	render();
-
-	if (shouldAutoOpenConfig()) {
-		els.configDialog.showModal();
-	}
 
 	function loop() {
 		render();
