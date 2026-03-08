@@ -2,9 +2,10 @@ import type { APIRoute } from 'astro';
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const clientId = 'Ov23liTnLPEPqqDWdFcE';
-  const clientSecret = import.meta.env.GITHUB_CLIENT_SECRET;
+  const { env } = locals.runtime;
+  const clientSecret = env.GITHUB_CLIENT_SECRET;
 
   if (!clientSecret) {
     return new Response(JSON.stringify({ error: 'GITHUB_CLIENT_SECRET not configured' }), {
