@@ -1,0 +1,467 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="GitHub Repos Manager">
+	<div id="app"></div>
+</Layout>
+
+<script>
+	import { Octokit } from 'octokit';
+	import type { Endpoints } from '@octokit/types';
+
+	type Repo = Endpoints['GET /user/repos']['response']['data'][0];
+
+	type Actions = {
+		rename: Record<string, string>;
+		archived: Record<string, boolean>;
+		private: Record<string, boolean>;
+		remove: Record<string, boolean>;
+		description: Record<string, string>;
+	};
+
+type Action =
+	| { repo: string; action: 'archived' | 'private' | 'remove' }
+	| { repo: string; name: string; action: 'rename' }
+	| { repo: string; action: 'description'; description: string }
+	| { action: 'reset' };
+
+	// Client ID for GitHub OAuth - hardcoded
+	const clientID = 'Ov23liTnLPEPqqDWdFcE';
+
+	let octokit: Octokit | null = null;
+	let repos: Repo[] = [];
+	let actions: Actions = {
+		rename: {},
+		archived: {},
+		private: {},
+		remove: {},
+		description: {},
+	};
+
+	const app = document.getElementById('app')!;
+
+	async function getAllRepos(octokit: Octokit): Promise<Repo[]> {
+		return octokit.paginate(`GET /user/repos?sort=created`, {
+			'X-GitHub-Api-Version': '2022-11-28',
+		});
+	}
+
+	function render() {
+		if (!octokit) {
+			app.innerHTML = `
+				<div class="flex min-h-screen flex-col items-center justify-center">
+					<div class="w-full max-w-md rounded-lg bg-gray-50 p-6 text-center shadow-md">
+						<p class="mb-4 text-lg">請使用 GitHub 登入：</p>
+						<a href="https://github.com/login/oauth/authorize?client_id=${clientID}&scope=repo+delete_repo" class="inline-block rounded bg-black px-4 py-2 text-white">
+							使用 GitHub 登入
+						</a>
+					</div>
+				</div>
+			`;
+			return;
+		}
+
+		if (repos.length === 0) {
+			app.innerHTML = `
+				<div class="flex min-h-screen flex-col items-center justify-center">
+					<p class="loading text-3xl">
+						Loading<span>.</span><span>.</span><span>.</span>
+					</p>
+				</div>
+				<style>
+					.loading span { opacity: 0; animation: fadeInOut 3s infinite; }
+					.loading span:nth-child(1) { animation-delay: 0s; }
+					.loading span:nth-child(2) { animation-delay: 1s; }
+					.loading span:nth-child(3) { animation-delay: 2s; }
+					@keyframes fadeInOut { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+				</style>
+			`;
+			return;
+		}
+
+		renderMain();
+	}
+
+	function renderMain() {
+		const filtered = filterRepos(repos);
+
+		app.innerHTML = `
+			<div class="m-8">
+				<p>雙擊文字可以修改</p>
+				<div class="flex flex-col border">
+					${renderFilterRow()}
+					${filtered.map((repo) => renderRepoRow(repo)).join('')}
+				</div>
+				<div class="flex w-full gap-4">
+					<button id="reset-btn" class="my-2 grow rounded-lg border p-2" type="button">Reset</button>
+					<button id="submit-btn" class="my-2 grow rounded-lg border p-2" type="button">Submit</button>
+				</div>
+			</div>
+		`;
+
+		attachEventListeners();
+	}
+
+	function renderFilterRow() {
+		const name = filterName;
+		const privateState = ['all', 'private', 'public'];
+		const archivedState = ['all', 'archived', 'unarchived'];
+
+		return `
+			<div class="grid grid-cols-[2fr_2fr_8rem_8rem_8rem] hover:bg-blue-200">
+				<div class="border p-2 break-all">
+					<input type="text" id="filter-name" value="${name}" placeholder="Filter by name(regex)" class="w-full rounded border p-1 break-all" />
+				</div>
+				<div class="border p-2 break-all"></div>
+				<div class="border p-2 break-all cursor-pointer" id="toggle-private">${privateState[privateFilter]}</div>
+				<div class="border p-2 break-all cursor-pointer" id="toggle-archived">${archivedState[archivedFilter]}</div>
+				<div class="border p-2 break-all">Remove</div>
+			</div>
+		`;
+	}
+
+	function renderRepoRow(repo: Repo) {
+		const isPendingRename = repo.full_name in actions.rename;
+		const isPendingDesc = repo.full_name in actions.description;
+		const isPendingPrivate = repo.full_name in actions.private;
+		const isPendingArchive = repo.full_name in actions.archived;
+		const isPendingRemove = repo.full_name in actions.remove;
+
+		return `
+			<div class="grid grid-cols-[2fr_2fr_8rem_8rem_8rem] hover:bg-blue-200">
+				<div class="border p-2 break-all cursor-pointer" data-action="rename" data-repo="${repo.full_name}">
+					<h2>
+						<a href="${repo.html_url}" target="_blank" class="underline-offset-4 hover:underline-offset-2">
+							${repo.full_name}
+						</a>
+						<br />
+						${isPendingRename ? `<span class="font-bold text-red-500">-&gt;${actions.rename[repo.full_name]}</span>` : ''}
+					</h2>
+				</div>
+				<div class="border p-2 break-all cursor-pointer" data-action="description" data-repo="${repo.full_name}">
+					<p>
+						${repo.description || ''}
+						<br />
+						${isPendingDesc ? `<span class="font-bold text-red-500">-&gt;${actions.description[repo.full_name]}</span>` : ''}
+					</p>
+				</div>
+				<div class="border p-2 break-all cursor-pointer" data-action="private" data-repo="${repo.full_name}">
+					<p>
+						${repo.private ? 'Private' : 'Public'}
+						<br />
+						${isPendingPrivate ? `<span class="font-bold text-red-500">-&gt;${actions.private[repo.full_name] ? 'Private' : 'Public'}</span>` : ''}
+					</p>
+				</div>
+				<div class="border p-2 break-all cursor-pointer" data-action="archived" data-repo="${repo.full_name}">
+					<p>
+						${repo.archived ? 'Archived' : 'Unarchived'}
+						<br />
+						${isPendingArchive ? `<span class="font-bold text-red-500">-&gt;${actions.archived[repo.full_name] ? 'Archived' : 'Unarchived'}</span>` : ''}
+					</p>
+				</div>
+				<div class="border p-2 break-all cursor-pointer" data-action="remove" data-repo="${repo.full_name}">
+					${isPendingRemove ? `<p class="font-bold text-red-500">Removed</p>` : ''}
+				</div>
+			</div>
+		`;
+	}
+
+	let filterName = '';
+	let privateFilter = 0;
+	let archivedFilter = 0;
+
+	function filterRepos(allRepos: Repo[]) {
+		return allRepos.filter((repo) => {
+			if (filterName && !repo.full_name.match(filterName)) return false;
+			if (privateFilter !== 0) {
+				const isPrivate = privateFilter === 1 ? repo.private : !repo.private;
+				if (!isPrivate) return false;
+			}
+			if (archivedFilter !== 0) {
+				const isArchived = archivedFilter === 1 ? repo.archived : !repo.archived;
+				if (!isArchived) return false;
+			}
+			return true;
+		});
+	}
+
+	function updateActions(action: Action) {
+		if (action.action === 'reset') {
+			actions = {
+				rename: {},
+				archived: {},
+				private: {},
+				remove: {},
+				description: {},
+			};
+			render();
+			return;
+		}
+
+		const repo = repos.find((r) => r.full_name === action.repo);
+		if (!repo) return;
+
+		const newActions = { ...actions };
+
+		switch (action.action) {
+			case 'rename':
+				newActions.rename[action.repo] = action.name;
+				if (action.name === repo.full_name) delete newActions.rename[action.repo];
+				break;
+			case 'private':
+				const isPrivate = action.repo in newActions.private
+					? !newActions.private[action.repo]
+					: !repo.private;
+				newActions.private[action.repo] = isPrivate;
+				if (isPrivate === repo.private) delete newActions.private[action.repo];
+				break;
+			case 'archived':
+				const archived = action.repo in newActions.archived
+					? !newActions.archived[action.repo]
+					: !repo.archived;
+				newActions.archived[action.repo] = archived;
+				if (archived === repo.archived) delete newActions.archived[action.repo];
+				break;
+			case 'remove':
+				const remove = action.repo in newActions.remove
+					? !newActions.remove[action.repo]
+					: true;
+				newActions.remove[action.repo] = remove;
+				if (!remove) delete newActions.remove[action.repo];
+				break;
+			case 'description':
+				newActions.description[action.repo] = action.description;
+				if (action.description === repo.description) delete newActions.description[action.repo];
+				break;
+		}
+
+		actions = newActions;
+		render();
+	}
+
+	function composeMsg(): string {
+		const s: string[] = [];
+
+		const toBeRemoved = Object.keys(actions.remove).map((repoName) => {
+			const [owner, repo] = repoName.split('/');
+			return { owner, repo };
+		});
+
+		const reposToUpdate = [
+			...new Set([
+				...Object.keys(actions.private),
+				...Object.keys(actions.archived),
+				...Object.keys(actions.rename),
+				...Object.keys(actions.description),
+			]),
+		].map((repoName) => {
+			const [owner, repo] = repoName.split('/');
+			const r: { owner: string; repo: string; private?: boolean; archived?: boolean; name?: string; description?: string } = { owner, repo };
+
+			if (repoName in actions.private) {
+				r.private = actions.private[repoName];
+			}
+			if (repoName in actions.archived) {
+				r.archived = actions.archived[repoName];
+			}
+			if (repoName in actions.rename) {
+				r.name = actions.rename[repoName];
+			}
+			if (repoName in actions.description) {
+				r.description = actions.description[repoName];
+			}
+
+			return r;
+		});
+
+		for (const repo of reposToUpdate) {
+			const actionParts: string[] = [];
+			if (repo.archived !== undefined) {
+				actionParts.push(repo.archived ? '封存' : '解封存');
+			}
+			if (repo.private !== undefined) {
+				actionParts.push(repo.private ? '設為私人' : '公開');
+			}
+			if (repo.description !== undefined) {
+				actionParts.push(repo.description ? '更改描述' : '清除描述');
+			}
+			if (repo.name) {
+				actionParts.push(`改名為 ${repo.name}`);
+			}
+
+			s.push(actionParts.join('、') + `${repo.owner}/${repo.repo}`);
+		}
+
+		for (const repo of toBeRemoved) {
+			s.push(`刪除 ${repo.owner}/${repo.repo}`);
+		}
+
+		return s.join('\n');
+	}
+
+	async function doAction() {
+		const toBeRemoved = Object.keys(actions.remove).map((repoName) => {
+			const [owner, repo] = repoName.split('/');
+			return { owner, repo };
+		});
+
+		const reposToUpdate = [
+			...new Set([
+				...Object.keys(actions.private),
+				...Object.keys(actions.archived),
+				...Object.keys(actions.rename),
+				...Object.keys(actions.description),
+			]),
+		].map((repoName) => {
+			const [owner, repo] = repoName.split('/');
+			const r: { owner: string; repo: string; private?: boolean; archived?: boolean; name?: string; description?: string } = { owner, repo };
+
+			if (repoName in actions.private) {
+				r.private = actions.private[repoName];
+			}
+			if (repoName in actions.archived) {
+				r.archived = actions.archived[repoName];
+			}
+			if (repoName in actions.rename) {
+				r.name = actions.rename[repoName];
+			}
+			if (repoName in actions.description) {
+				r.description = actions.description[repoName];
+			}
+
+			return r;
+		});
+
+		await Promise.all(
+			reposToUpdate.map((repo) => octokit!.request(`PATCH /repos/{owner}/{repo}`, repo)),
+		);
+
+		await Promise.all(
+			toBeRemoved.map((repo) => octokit!.request('DELETE /repos/{owner}/{repo}', repo)),
+		);
+	}
+
+	function attachEventListeners() {
+		const filterNameInput = document.getElementById('filter-name') as HTMLInputElement;
+		if (filterNameInput) {
+			filterNameInput.addEventListener('input', (e) => {
+				filterName = (e.target as HTMLInputElement).value;
+				renderMain();
+			});
+		}
+
+		const togglePrivate = document.getElementById('toggle-private');
+		if (togglePrivate) {
+			togglePrivate.addEventListener('click', () => {
+				privateFilter = (privateFilter + 1) % 3;
+				renderMain();
+			});
+		}
+
+		const toggleArchived = document.getElementById('toggle-archived');
+		if (toggleArchived) {
+			toggleArchived.addEventListener('click', () => {
+				archivedFilter = (archivedFilter + 1) % 3;
+				renderMain();
+			});
+		}
+
+		document.querySelectorAll('[data-action="rename"]').forEach((el) => {
+			el.addEventListener('dblclick', () => {
+				const repoFullName = el.getAttribute('data-repo')!;
+				const name = repoFullName.split('/')[1];
+				const newName = prompt(`Rename ${name}`, name);
+				if (newName) {
+					const owner = repoFullName.split('/')[0];
+					updateActions({ repo: repoFullName, name: `${owner}/${newName}`, action: 'rename' });
+				}
+			});
+		});
+
+		document.querySelectorAll('[data-action="description"]').forEach((el) => {
+			el.addEventListener('dblclick', () => {
+				const repoFullName = el.getAttribute('data-repo')!;
+				const repo = repos.find((r) => r.full_name === repoFullName);
+				const newDesc = prompt(`Set Description`, repo?.description || '');
+				updateActions({ repo: repoFullName, action: 'description', description: newDesc || repo?.description || '' });
+			});
+		});
+
+		document.querySelectorAll('[data-action="private"]').forEach((el) => {
+			el.addEventListener('click', () => {
+				const repoFullName = el.getAttribute('data-repo')!;
+				updateActions({ repo: repoFullName, action: 'private' });
+			});
+		});
+
+		document.querySelectorAll('[data-action="archived"]').forEach((el) => {
+			el.addEventListener('click', () => {
+				const repoFullName = el.getAttribute('data-repo')!;
+				updateActions({ repo: repoFullName, action: 'archived' });
+			});
+		});
+
+		document.querySelectorAll('[data-action="remove"]').forEach((el) => {
+			el.addEventListener('click', () => {
+				const repoFullName = el.getAttribute('data-repo')!;
+				updateActions({ repo: repoFullName, action: 'remove' });
+			});
+		});
+
+		const resetBtn = document.getElementById('reset-btn');
+		if (resetBtn) {
+			resetBtn.addEventListener('click', () => {
+				updateActions({ action: 'reset' });
+			});
+		}
+
+		const submitBtn = document.getElementById('submit-btn');
+		if (submitBtn) {
+			submitBtn.addEventListener('click', async () => {
+				const msg = composeMsg();
+				if (!confirm(msg)) return;
+				if (!confirm('確定要執行？不可回復喔！')) return;
+				if (!confirm('真的嗎？這是最後一次確認')) return;
+
+				try {
+					await doAction();
+					alert('ok，請自己重新整理頁面，有時候要稍等一下才會抓到最新狀態');
+					updateActions({ action: 'reset' });
+				} catch (e) {
+					alert('error\n' + (e as Error).message);
+					console.error(e);
+				}
+			});
+		}
+	}
+
+	// OAuth handling
+	const urlParams = new URLSearchParams(window.location.search);
+	const code = urlParams.get('code');
+
+	if (code) {
+		fetch('/api/auth/github', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ code }),
+		})
+			.then((res) => res.json())
+			.then((data) => {
+				octokit = new Octokit({ auth: data.access_token });
+				getAllRepos(octokit).then((r) => {
+					repos = r;
+					render();
+				});
+			})
+			.then(() => {
+				window.history.replaceState(null, '', '/repos');
+			})
+			.catch((e) => {
+				alert('登入失敗，錯誤訊息在 Console');
+				console.error(e);
+			});
+	} else {
+		render();
+	}
+</script>
