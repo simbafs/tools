@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="GitHub Repos Manager">
-	<div id="app"></div>
+	<div id="app" class="min-h-[100dvh] bg-zinc-50 dark:bg-zinc-950"></div>
 </Layout>
 
 <script>
@@ -20,13 +20,12 @@ import Layout from '../layouts/Layout.astro';
 		description: Record<string, string>;
 	};
 
-type Action =
-	| { repo: string; action: 'archived' | 'private' | 'remove' }
-	| { repo: string; name: string; action: 'rename' }
-	| { repo: string; action: 'description'; description: string }
-	| { action: 'reset' };
+	type Action =
+		| { repo: string; action: 'archived' | 'private' | 'remove' }
+		| { repo: string; name: string; action: 'rename' }
+		| { repo: string; action: 'description'; description: string }
+		| { action: 'reset' };
 
-	// Client ID for GitHub OAuth - hardcoded
 	const clientID = 'Ov23liTnLPEPqqDWdFcE';
 
 	let octokit: Octokit | null = null;
@@ -39,6 +38,10 @@ type Action =
 		description: {},
 	};
 
+	let filterName = '';
+	let privateFilter = 0;
+	let archivedFilter = 0;
+
 	const app = document.getElementById('app')!;
 
 	async function getAllRepos(octokit: Octokit): Promise<Repo[]> {
@@ -50,11 +53,27 @@ type Action =
 	function render() {
 		if (!octokit) {
 			app.innerHTML = `
-				<div class="flex min-h-screen flex-col items-center justify-center">
-					<div class="w-full max-w-md rounded-lg bg-gray-50 p-6 text-center shadow-md">
-						<p class="mb-4 text-lg">請使用 GitHub 登入：</p>
-						<a href="https://github.com/login/oauth/authorize?client_id=${clientID}&scope=repo+delete_repo" class="inline-block rounded bg-black px-4 py-2 text-white">
-							使用 GitHub 登入
+				<div class="flex min-h-[100dvh] flex-col items-center justify-center p-6">
+					<div class="w-full max-w-md text-center">
+						<div class="mb-8 flex justify-center">
+							<svg class="h-16 w-16 text-zinc-900 dark:text-zinc-100" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+							</svg>
+						</div>
+						<h1 class="mb-3 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+							GitHub Repos Manager
+						</h1>
+						<p class="mb-8 text-zinc-500 dark:text-zinc-400">
+							Manage multiple repositories at once
+						</p>
+						<a
+							href="https://github.com/login/oauth/authorize?client_id=${clientID}&scope=repo+delete_repo"
+							class="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:bg-zinc-800 hover:-translate-y-0.5 active:translate-y-0 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+						>
+							<svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+							</svg>
+							Sign in with GitHub
 						</a>
 					</div>
 				</div>
@@ -64,18 +83,17 @@ type Action =
 
 		if (repos.length === 0) {
 			app.innerHTML = `
-				<div class="flex min-h-screen flex-col items-center justify-center">
-					<p class="loading text-3xl">
-						Loading<span>.</span><span>.</span><span>.</span>
-					</p>
+				<div class="flex min-h-[100dvh] flex-col items-center justify-center p-6">
+					<div class="w-full max-w-2xl">
+						<div class="mb-6 flex items-center justify-between">
+							<h1 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+								Repositories
+							</h1>
+							<span class="text-sm text-zinc-500">${repos.length} repos</span>
+						</div>
+						${renderLoadingSkeleton()}
+					</div>
 				</div>
-				<style>
-					.loading span { opacity: 0; animation: fadeInOut 3s infinite; }
-					.loading span:nth-child(1) { animation-delay: 0s; }
-					.loading span:nth-child(2) { animation-delay: 1s; }
-					.loading span:nth-child(3) { animation-delay: 2s; }
-					@keyframes fadeInOut { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
-				</style>
 			`;
 			return;
 		}
@@ -83,19 +101,63 @@ type Action =
 		renderMain();
 	}
 
+	function renderLoadingSkeleton() {
+		return `
+			<div class="space-y-3">
+				${Array(5).fill(0).map(() => `
+					<div class="flex gap-4 p-4">
+						<div class="h-6 w-1/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"></div>
+						<div class="h-6 w-1/4 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"></div>
+						<div class="h-6 w-20 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"></div>
+						<div class="h-6 w-20 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"></div>
+						<div class="h-6 w-16 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"></div>
+					</div>
+				`).join('')}
+			</div>
+		`;
+	}
+
 	function renderMain() {
 		const filtered = filterRepos(repos);
+		const pendingCount = Object.keys(actions.rename).length +
+			Object.keys(actions.archived).length +
+			Object.keys(actions.private).length +
+			Object.keys(actions.remove).length +
+			Object.keys(actions.description).length;
 
 		app.innerHTML = `
-			<div class="m-8">
-				<p>雙擊文字可以修改</p>
-				<div class="flex flex-col border">
+			<div class="mx-auto max-w-7xl p-6">
+				<header class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<div>
+						<h1 class="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+							Repositories
+						</h1>
+						<p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+							${repos.length} repos - ${filtered.length} shown
+							${pendingCount > 0 ? `<span class="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">${pendingCount} pending</span>` : ''}
+						</p>
+					</div>
+					<div class="flex gap-3">
+						${pendingCount > 0 ? `
+							<button id="reset-btn" class="inline-flex items-center gap-2 rounded-full border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition-all duration-200 hover:bg-zinc-50 hover:-translate-y-0.5 active:translate-y-0 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">
+								<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+								</svg>
+								Reset
+							</button>
+						` : ''}
+						<button id="submit-btn" class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-emerald-700 hover:-translate-y-0.5 active:translate-y-0 ${pendingCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${pendingCount === 0 ? 'disabled' : ''}>
+							<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+							</svg>
+							Apply Changes
+						</button>
+					</div>
+				</header>
+
+				<div class="mb-6 overflow-auto rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 max-h-[calc(100dvh-200px)]">
 					${renderFilterRow()}
-					${filtered.map((repo) => renderRepoRow(repo)).join('')}
-				</div>
-				<div class="flex w-full gap-4">
-					<button id="reset-btn" class="my-2 grow rounded-lg border p-2" type="button">Reset</button>
-					<button id="submit-btn" class="my-2 grow rounded-lg border p-2" type="button">Submit</button>
+					${filtered.length > 0 ? filtered.map((repo, i) => renderRepoRow(repo, i)).join('') : renderEmptyState()}
 				</div>
 			</div>
 		`;
@@ -104,72 +166,152 @@ type Action =
 	}
 
 	function renderFilterRow() {
-		const name = filterName;
 		const privateState = ['all', 'private', 'public'];
 		const archivedState = ['all', 'archived', 'unarchived'];
 
 		return `
-			<div class="grid grid-cols-[2fr_2fr_8rem_8rem_8rem] hover:bg-blue-200">
-				<div class="border p-2 break-all">
-					<input type="text" id="filter-name" value="${name}" placeholder="Filter by name(regex)" class="w-full rounded border p-1 break-all" />
+			<div class="sticky top-0 z-10">
+				<div class="grid grid-cols-[2fr_2fr_7rem_7rem_5rem] divide-x divide-zinc-200 border-b border-zinc-200 bg-zinc-100 dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-800/50">
+					<div class="p-2 text-center text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Repository</div>
+					<div class="p-2 text-center text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Description</div>
+					<div class="p-2 text-center text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Visibility</div>
+					<div class="p-2 text-center text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</div>
+					<div class="p-2 text-center text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400"></div>
 				</div>
-				<div class="border p-2 break-all"></div>
-				<div class="border p-2 break-all cursor-pointer" id="toggle-private">${privateState[privateFilter]}</div>
-				<div class="border p-2 break-all cursor-pointer" id="toggle-archived">${archivedState[archivedFilter]}</div>
-				<div class="border p-2 break-all">Remove</div>
+				<div class="grid grid-cols-[2fr_2fr_7rem_7rem_5rem] divide-x divide-zinc-200 bg-zinc-50 shadow-sm dark:divide-zinc-800 dark:bg-zinc-900/50 dark:shadow-zinc-950/50">
+					<div class="p-3">
+						<input
+							type="text"
+							id="filter-name"
+							value="${filterName}"
+							placeholder="Filter by name..."
+							class="w-full rounded-lg border-0 bg-white px-3 py-2 text-sm text-zinc-900 ring-1 ring-zinc-200 placeholder:text-zinc-400 focus:ring-2 focus:ring-emerald-500 dark:bg-zinc-800 dark:text-zinc-100 dark:ring-zinc-700 dark:placeholder:text-zinc-500"
+						/>
+					</div>
+					<div class="p-3"></div>
+					<button id="toggle-private" class="flex items-center justify-center px-2 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800">
+						<span class="rounded-full px-3 py-1 ${privateFilter !== 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}">
+							${privateState[privateFilter]}
+						</span>
+					</button>
+					<button id="toggle-archived" class="flex items-center justify-center px-2 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800">
+						<span class="rounded-full px-3 py-1 ${archivedFilter !== 0 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'text-zinc-600 dark:text-zinc-400'}">
+							${archivedState[archivedFilter]}
+						</span>
+					</button>
+					<div class="flex items-center justify-center px-2 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400"></div>
+				</div>
 			</div>
 		`;
 	}
 
-	function renderRepoRow(repo: Repo) {
+	function renderRepoRow(repo: Repo, index: number) {
 		const isPendingRename = repo.full_name in actions.rename;
 		const isPendingDesc = repo.full_name in actions.description;
 		const isPendingPrivate = repo.full_name in actions.private;
 		const isPendingArchive = repo.full_name in actions.archived;
 		const isPendingRemove = repo.full_name in actions.remove;
 
+		const hasPending = isPendingRename || isPendingDesc || isPendingPrivate || isPendingArchive || isPendingRemove;
+
 		return `
-			<div class="grid grid-cols-[2fr_2fr_8rem_8rem_8rem] hover:bg-blue-200">
-				<div class="border p-2 break-all cursor-pointer" data-action="rename" data-repo="${repo.full_name}">
-					<h2>
-						<a href="${repo.html_url}" target="_blank" class="underline-offset-4 hover:underline-offset-2">
-							${repo.full_name}
-						</a>
-						<br />
-						${isPendingRename ? `<span class="font-bold text-red-500">-&gt;${actions.rename[repo.full_name]}</span>` : ''}
-					</h2>
+			<div class="group grid grid-cols-[2fr_2fr_7rem_7rem_5rem] divide-x divide-zinc-200 border-t border-zinc-200 transition-colors hover:bg-zinc-50 dark:divide-zinc-800 dark:border-zinc-800 dark:hover:bg-zinc-800/50 ${hasPending ? 'bg-amber-50/50 dark:bg-amber-950/10' : ''}" style="animation-delay: calc(${index} * 20ms)">
+				<div class="group/cell relative p-3 cursor-pointer" data-action="rename" data-repo="${repo.full_name}">
+					<div class="flex items-center gap-2">
+						<svg class="h-4 w-4 flex-shrink-0 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+						</svg>
+						<div class="min-w-0">
+							<a href="${repo.html_url}" target="_blank" class="block truncate text-sm font-medium text-zinc-900 hover:text-emerald-600 dark:text-zinc-100 dark:hover:text-emerald-400">
+								${repo.full_name}
+							</a>
+							${isPendingRename ? `
+								<span class="text-xs font-medium text-amber-600 dark:text-amber-400">
+									-&gt; ${actions.rename[repo.full_name]}
+								</span>
+							` : ''}
+						</div>
+					</div>
 				</div>
-				<div class="border p-2 break-all cursor-pointer" data-action="description" data-repo="${repo.full_name}">
-					<p>
-						${repo.description || ''}
-						<br />
-						${isPendingDesc ? `<span class="font-bold text-red-500">-&gt;${actions.description[repo.full_name]}</span>` : ''}
+
+				<div class="group/cell relative p-3 cursor-pointer" data-action="description" data-repo="${repo.full_name}">
+					<p class="line-clamp-2 text-sm text-zinc-500 dark:text-zinc-400 ${repo.description ? '' : 'italic'}">
+						${repo.description || 'No description'}
 					</p>
+					${isPendingDesc ? `
+						<span class="text-xs font-medium text-amber-600 dark:text-amber-400">
+							-&gt; ${actions.description[repo.full_name] || '(empty)'}
+						</span>
+					` : ''}
 				</div>
-				<div class="border p-2 break-all cursor-pointer" data-action="private" data-repo="${repo.full_name}">
-					<p>
-						${repo.private ? 'Private' : 'Public'}
-						<br />
-						${isPendingPrivate ? `<span class="font-bold text-red-500">-&gt;${actions.private[repo.full_name] ? 'Private' : 'Public'}</span>` : ''}
-					</p>
-				</div>
-				<div class="border p-2 break-all cursor-pointer" data-action="archived" data-repo="${repo.full_name}">
-					<p>
-						${repo.archived ? 'Archived' : 'Unarchived'}
-						<br />
-						${isPendingArchive ? `<span class="font-bold text-red-500">-&gt;${actions.archived[repo.full_name] ? 'Archived' : 'Unarchived'}</span>` : ''}
-					</p>
-				</div>
-				<div class="border p-2 break-all cursor-pointer" data-action="remove" data-repo="${repo.full_name}">
-					${isPendingRemove ? `<p class="font-bold text-red-500">Removed</p>` : ''}
-				</div>
+
+				<button
+					class="flex flex-col items-center justify-center gap-1 p-2 text-xs font-medium transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+					data-action="private"
+					data-repo="${repo.full_name}"
+				>
+					<span class="flex h-6 w-6 items-center justify-center rounded-full ${repo.private ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'}">
+						${repo.private ? `
+							<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+							</svg>
+						` : `
+							<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+							</svg>
+						`}
+					</span>
+					${isPendingPrivate ? `<span class="text-amber-600 dark:text-amber-400">-&gt;${actions.private[repo.full_name] ? 'P' : 'O'}</span>` : ''}
+				</button>
+
+				<button
+					class="flex flex-col items-center justify-center gap-1 p-2 text-xs font-medium transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+					data-action="archived"
+					data-repo="${repo.full_name}"
+				>
+					<span class="flex h-6 w-6 items-center justify-center rounded-full ${repo.archived ? 'bg-zinc-600 text-white' : 'bg-zinc-200 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'}">
+						${repo.archived ? `
+							<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+							</svg>
+						` : ''}
+					</span>
+					${isPendingArchive ? `<span class="text-amber-600 dark:text-amber-400">-&gt;${actions.archived[repo.full_name] ? 'A' : 'U'}</span>` : ''}
+				</button>
+
+				<button
+					class="flex items-center justify-center p-2 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30"
+					data-action="remove"
+					data-repo="${repo.full_name}"
+				>
+					${isPendingRemove ? `
+						<span class="flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white">
+							<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+							</svg>
+						</span>
+					` : `
+						<span class="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-300 text-zinc-300 hover:border-red-300 hover:text-red-400 dark:border-zinc-700 dark:text-zinc-600">
+							<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+							</svg>
+						</span>
+					`}
+				</button>
 			</div>
 		`;
 	}
 
-	let filterName = '';
-	let privateFilter = 0;
-	let archivedFilter = 0;
+	function renderEmptyState() {
+		return `
+			<div class="flex flex-col items-center justify-center py-16 text-center">
+				<svg class="h-12 w-12 text-zinc-300 dark:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+				</svg>
+				<p class="mt-4 text-sm text-zinc-500 dark:text-zinc-400">No repositories match your filters</p>
+			</div>
+		`;
+	}
 
 	function filterRepos(allRepos: Repo[]) {
 		return allRepos.filter((repo) => {
@@ -420,6 +562,10 @@ type Action =
 		if (submitBtn) {
 			submitBtn.addEventListener('click', async () => {
 				const msg = composeMsg();
+				if (!msg) {
+					alert('No changes to apply');
+					return;
+				}
 				if (!confirm(msg)) return;
 				if (!confirm('確定要執行？不可回復喔！')) return;
 				if (!confirm('真的嗎？這是最後一次確認')) return;
@@ -436,7 +582,6 @@ type Action =
 		}
 	}
 
-	// OAuth handling
 	const urlParams = new URLSearchParams(window.location.search);
 	const code = urlParams.get('code');
 
